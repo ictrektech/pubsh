@@ -21,14 +21,17 @@ if [ $? -ne 0 ]; then
 fi
 
 # 检查 docker-compose 命令兼容性
-DOCKER_COMPOSE_CMD=$(command -v docker-compose || command -v docker compose)
-if [ -z "$DOCKER_COMPOSE_CMD" ]; then
-    echo "docker-compose 未安装！"
+if command -v docker compose &> /dev/null; then
+    CMD="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    CMD="docker-compose"
+else
+    echo "未检测到 docker compose 或 docker-compose 命令！"
     exit 1
 fi
 
 # 启动容器
-$DOCKER_COMPOSE_CMD -f "$CONFIG_FILE" up -d
+$CMD -f "$CONFIG_FILE" up -d
 if [ $? -ne 0 ]; then
     echo "容器启动失败！"
     exit 1
@@ -38,9 +41,15 @@ fi
 echo "等待容器启动完成..."
 sleep 10
 
-# 拉取模型文件
-CONTAINER_NAME="ollama"
+# 动态读取容器名称
+CONTAINER_NAME=$(grep 'container_name:' "$CONFIG_FILE" | awk '{print $2}')
+if [ -z "$CONTAINER_NAME" ]; then
+    echo "无法从 YAML 文件中读取容器名称！"
+    exit 1
+fi
+echo "读取到容器名称：$CONTAINER_NAME"
 
+# 拉取模型文件
 for MODEL in huluxiaohuowa/qwen7b:32k huluxiaohuowa/qwen1.5b:32k huluxiaohuowa/cpmv:32k
 do
     docker exec -it "$CONTAINER_NAME" ollama pull "$MODEL"
