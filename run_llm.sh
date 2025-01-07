@@ -5,7 +5,7 @@ CONFIG_FILE=~/dc_llm.yml
 URL="https://raw.githubusercontent.com/ictrektech/pubsh/main/dc_ollama_arm.yaml"
 
 # 下载 YAML 文件
-curl -o "$CONFIG_FILE" -H 'Cache-Control: no-cache' "$URL"
+curl -L -o "$CONFIG_FILE" -H 'Cache-Control: no-cache' "$URL"
 if [ $? -ne 0 ]; then
     echo "下载配置文件失败！"
     exit 1
