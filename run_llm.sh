@@ -4,17 +4,8 @@
 CONFIG_FILE=~/dc_llm.yml
 URL="https://raw.githubusercontent.com/ictrektech/pubsh/main/dc_ollama_arm.yaml"
 
-# 检查文件是否存在并询问是否覆盖
-if [ -f "$CONFIG_FILE" ]; then
-    read -p "配置文件已存在，是否覆盖？(y/n): " choice
-    if [[ $choice != "y" ]]; then
-        echo "取消操作"
-        exit 1
-    fi
-fi
-
 # 下载 YAML 文件
-curl -o "$CONFIG_FILE" "$URL"
+curl -o -H 'Cache-Control: no-cache' "$CONFIG_FILE" "$URL"
 if [ $? -ne 0 ]; then
     echo "下载配置文件失败！"
     exit 1
