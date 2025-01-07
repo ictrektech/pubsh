@@ -39,7 +39,7 @@ echo "等待容器启动完成..."
 sleep 10
 
 # 拉取模型文件
-CONTAINER_NAME="ollama_cpm"
+CONTAINER_NAME="ollama"
 
 for MODEL in huluxiaohuowa/qwen7b:32k huluxiaohuowa/qwen1.5b:32k huluxiaohuowa/cpmv:32k
 do

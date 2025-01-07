@@ -1,6 +1,6 @@
 services:
-  ollama_cpm:
-    container_name: ollama_cpm
+  ollama:
+    container_name: ollama
     image: ictrektech/ollama_server:arm_latest
     restart: on-failure
     command: ["bash", "/root/ollama_run.sh"]
