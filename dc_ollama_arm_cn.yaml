@@ -11,9 +11,6 @@ services:
       # - HTTP_PROXY=http://192.168.1.91:7897
       # - HTTPS_PROXY=http://192.168.1.91:7897
     volumes:
-      # - /home/jhu/dev/models/MiniCPM-V_2_6_awq_int4:/root/model
-      # - /home/jhu/dev/models/Qwen2.5-7B-Instruct-GPTQ-Int4:/root/model
-      # - /home/jhu/dev/models/Qwen2.5-3B-Instruct-GPTQ-Int4:/root/model
       - ${HOME}/.ollama:/root/.ollama
     ports:
       - "22299:11434"
