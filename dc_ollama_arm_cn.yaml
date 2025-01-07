@@ -1,0 +1,30 @@
+services:
+  ollama:
+    container_name: ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
+    restart: on-failure
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true  # 启用标准输入
+    tty: true         # 启用伪终端
+    environment:
+      - MAX_MODEL_LEN=32768
+      # - HTTP_PROXY=http://192.168.1.91:7897
+      # - HTTPS_PROXY=http://192.168.1.91:7897
+    volumes:
+      # - /home/jhu/dev/models/MiniCPM-V_2_6_awq_int4:/root/model
+      # - /home/jhu/dev/models/Qwen2.5-7B-Instruct-GPTQ-Int4:/root/model
+      # - /home/jhu/dev/models/Qwen2.5-3B-Instruct-GPTQ-Int4:/root/model
+      - ${HOME}/.ollama:/root/.ollama
+    ports:
+      - "22299:11434"
+      - "11434:11434"
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.100
+
+networks:
+  fastllm:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
