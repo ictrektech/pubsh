@@ -19,7 +19,7 @@ services:
       - "22299:11434"
       - "11434:11434"
     networks:
-      chatbot_net:
+      fastllm:
         ipv4_address: 172.28.1.100
 
 networks:
