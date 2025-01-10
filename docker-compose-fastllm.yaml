@@ -1,0 +1,208 @@
+name: docker
+services:
+  elasticsearch:
+    container_name: fastllm-elasticsearch
+    environment:
+      ELASTIC_PASSWORD: "123456"
+      ES_JAVA_OPTS: -Xms750m -Xmx750m
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://elastic:123456@localhost:9200
+      timeout: 10s
+      interval: 10s
+      retries: 120
+    image: elasticsearch:8.11.3@sha256:58a3a280935d830215802322e9a0373faaacdfd646477aa7e718939c2f29292a
+    networks:
+      fastllm: null
+    ports:
+      - mode: ingress
+        target: 9200
+        published: "9200"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: es-data
+        target: /usr/share/elasticsearch/data
+        volume: {}
+      - type: volume
+        source: es-log
+        target: /usr/share/elasticsearch/logs
+        volume: {}
+  fastllm:
+    command:
+      - sh
+      - -c
+      - |
+        celery -A task worker -l info > log/celery.log 2> log/celery.log &
+        python3.11 main.py > log/flask.log 2> log/flask.log
+    container_name: fastllm-server
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+        required: true
+      mysql:
+        condition: service_healthy
+        required: true
+    image: ictrektech/fastllm:1.5
+    networks:
+      fastllm: null
+    ports:
+      - mode: ingress
+        target: 5000
+        published: "5000"
+        protocol: tcp
+    restart: always
+    stdin_open: true
+    tty: true
+  minio:
+    command:
+      - server
+      - /data
+      - --console-address
+      - :9050
+      - -address
+      - :9030
+    container_name: fastllm-minio
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    image: minio/minio:RELEASE.2022-03-17T06-34-49Z@sha256:c58a0463da0a46d4a078cc5f1837ca5fc3eaf0efcd3b782dc536e913d849e587
+    networks:
+      fastllm: null
+    ports:
+      - mode: ingress
+        target: 9030
+        published: "9030"
+        protocol: tcp
+      - mode: ingress
+        target: 9050
+        published: "9050"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: minio-data
+        target: /data
+        volume: {}
+      - type: volume
+        source: minio-config
+        target: /root/.config
+        volume: {}
+  mysql:
+    command:
+      - --tls_version=TLSv1.2,TLSv1.3
+      - --init-file
+      - /data/application/init.sql
+    container_name: fastllm-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -uroot
+        - -p123456
+      timeout: 10s
+      interval: 10s
+      retries: 3
+    image: mysql:8.0.29@sha256:12cf01a51f803d0ad49ee0dbbb3025a6eef3341e24757c2ed8150b6654c3fb07
+    networks:
+      fastllm: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3306"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: mysql-data
+        target: /var/lib/mysql
+        volume: {}
+      - type: bind
+        source: ./init_mysql_database.sql
+        target: /data/application/init.sql
+        bind:
+          create_host_path: true
+  rabbitmq:
+    container_name: fastllm-rabbitmq
+    image: rabbitmq:management@sha256:0a49dc5208c6092167fbe2e9dc2a0a0a8a44b02c391aae9ed90e60203f0b1b49
+    networks:
+      fastllm: null
+    ports:
+      - mode: ingress
+        target: 5672
+        published: "5672"
+        protocol: tcp
+      - mode: ingress
+        target: 15672
+        published: "15672"
+        protocol: tcp
+    restart: always
+  redis:
+    container_name: fastllm-redis
+    environment:
+      REDIS_ARGS: --requirepass 123456
+    image: redis/redis-stack:7.2.0-v7@sha256:e0ced795a4e2d6a9d12b5983101bdaef800964521d5020b1aa4d09ebed32900c
+    networks:
+      fastllm: null
+    ports:
+      - mode: ingress
+        target: 6379
+        published: "6379"
+        protocol: tcp
+      - mode: ingress
+        target: 8001
+        published: "8001"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: redis-data
+        target: /data
+        volume: {}
+  whisper:
+    command:
+      - bash
+      - /root/whisper_run.sh
+    container_name: fastllm-whisper
+    image: ictrektech/whisper:latest
+    networks:
+      fastllm: null
+    ports:
+      - mode: ingress
+        target: 10095
+        published: "10095"
+        protocol: tcp
+    restart: always
+networks:
+  fastllm:
+    name: fastllm
+    driver: bridge
+volumes:
+  es-data:
+    name: es-data
+    driver: local
+  es-log:
+    name: es-log
+    driver: local
+  minio-config:
+    name: minio-config
+    driver: local
+  minio-data:
+    name: minio-data
+    driver: local
+  mysql-data:
+    name: mysql-data
+    driver: local
+  redis-data:
+    name: redis-data
+    driver: local
