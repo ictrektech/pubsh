@@ -128,7 +128,7 @@ services:
         target: /var/lib/mysql
         volume: {}
       - type: bind
-        source: ./init_mysql_database.sql
+        source: ~/init_mysql_database.sql
         target: /data/application/init.sql
         bind:
           create_host_path: true
