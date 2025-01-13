@@ -1,40 +1,5 @@
 name: docker
 services:
-  elasticsearch:
-    container_name: fastllm-elasticsearch
-    environment:
-      ELASTIC_PASSWORD: "123456"
-      ES_JAVA_OPTS: -Xms750m -Xmx750m
-      cluster.routing.allocation.disk.threshold_enabled: "false"
-      discovery.type: single-node
-      xpack.security.enabled: "true"
-      xpack.security.http.ssl.enabled: "false"
-      xpack.security.transport.ssl.enabled: "false"
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - curl http://elastic:123456@localhost:9200
-      timeout: 10s
-      interval: 10s
-      retries: 120
-    image: elasticsearch:8.11.3@sha256:58a3a280935d830215802322e9a0373faaacdfd646477aa7e718939c2f29292a
-    networks:
-      fastllm: null
-    ports:
-      - mode: ingress
-        target: 9200
-        published: "29200"
-        protocol: tcp
-    restart: always
-    volumes:
-      - type: volume
-        source: es-data
-        target: /usr/share/elasticsearch/data
-        volume: {}
-      - type: volume
-        source: es-log
-        target: /usr/share/elasticsearch/logs
-        volume: {}
   fastllm:
     command:
       - sh
@@ -52,7 +17,8 @@ services:
         required: true
     image: ictrektech/fastllm:1.5
     networks:
-      fastllm: null
+      fastllm:
+        ipv4_address: 172.28.1.0
     ports:
       - mode: ingress
         target: 5000
@@ -61,40 +27,6 @@ services:
     restart: always
     stdin_open: true
     tty: true
-  minio:
-    command:
-      - server
-      - /data
-      - --console-address
-      - :9050
-      - -address
-      - :9030
-    container_name: fastllm-minio
-    environment:
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-    image: minio/minio:RELEASE.2022-03-17T06-34-49Z@sha256:c58a0463da0a46d4a078cc5f1837ca5fc3eaf0efcd3b782dc536e913d849e587
-    networks:
-      fastllm: null
-    ports:
-      - mode: ingress
-        target: 9030
-        published: "29030"
-        protocol: tcp
-      - mode: ingress
-        target: 9050
-        published: "29050"
-        protocol: tcp
-    restart: always
-    volumes:
-      - type: volume
-        source: minio-data
-        target: /data
-        volume: {}
-      - type: volume
-        source: minio-config
-        target: /root/.config
-        volume: {}
   mysql:
     command:
       - --tls_version=TLSv1.2,TLSv1.3
@@ -115,7 +47,8 @@ services:
       retries: 3
     image: mysql:8.0.29@sha256:12cf01a51f803d0ad49ee0dbbb3025a6eef3341e24757c2ed8150b6654c3fb07
     networks:
-      fastllm: null
+      fastllm:
+        ipv4_address: 172.28.1.1
     ports:
       - mode: ingress
         target: 3306
@@ -132,28 +65,85 @@ services:
         target: /data/application/init.sql
         bind:
           create_host_path: true
-  rabbitmq:
-    container_name: fastllm-rabbitmq
-    image: rabbitmq:management@sha256:0a49dc5208c6092167fbe2e9dc2a0a0a8a44b02c391aae9ed90e60203f0b1b49
+  elasticsearch:
+    container_name: fastllm-elasticsearch
+    environment:
+      ELASTIC_PASSWORD: "123456"
+      ES_JAVA_OPTS: -Xms750m -Xmx750m
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://elastic:123456@localhost:9200
+      timeout: 10s
+      interval: 10s
+      retries: 120
+    image: elasticsearch:8.11.3@sha256:58a3a280935d830215802322e9a0373faaacdfd646477aa7e718939c2f29292a
     networks:
-      fastllm: null
+      fastllm:
+        ipv4_address: 172.28.1.2
     ports:
       - mode: ingress
-        target: 5672
-        published: "25672"
-        protocol: tcp
-      - mode: ingress
-        target: 15672
-        published: "35672"
+        target: 9200
+        published: "29200"
         protocol: tcp
     restart: always
+    volumes:
+      - type: volume
+        source: es-data
+        target: /usr/share/elasticsearch/data
+        volume: {}
+      - type: volume
+        source: es-log
+        target: /usr/share/elasticsearch/logs
+        volume: {}
+  minio:
+    command:
+      - server
+      - /data
+      - --console-address
+      - :9050
+      - -address
+      - :9030
+    container_name: fastllm-minio
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    image: minio/minio:RELEASE.2022-03-17T06-34-49Z@sha256:c58a0463da0a46d4a078cc5f1837ca5fc3eaf0efcd3b782dc536e913d849e587
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.3
+    ports:
+      - mode: ingress
+        target: 9030
+        published: "29030"
+        protocol: tcp
+      - mode: ingress
+        target: 9050
+        published: "29050"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: minio-data
+        target: /data
+        volume: {}
+      - type: volume
+        source: minio-config
+        target: /root/.config
+        volume: {}
   redis:
     container_name: fastllm-redis
     environment:
       REDIS_ARGS: --requirepass 123456
     image: redis/redis-stack:7.2.0-v7@sha256:e0ced795a4e2d6a9d12b5983101bdaef800964521d5020b1aa4d09ebed32900c
     networks:
-      fastllm: null
+      fastllm:
+        ipv4_address: 172.28.1.4
     ports:
       - mode: ingress
         target: 6379
@@ -169,6 +159,22 @@ services:
         source: redis-data
         target: /data
         volume: {}
+  rabbitmq:
+    container_name: fastllm-rabbitmq
+    image: rabbitmq:management@sha256:0a49dc5208c6092167fbe2e9dc2a0a0a8a44b02c391aae9ed90e60203f0b1b49
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - mode: ingress
+        target: 5672
+        published: "25672"
+        protocol: tcp
+      - mode: ingress
+        target: 15672
+        published: "35672"
+        protocol: tcp
+    restart: always
   whisper:
     command:
       - bash
@@ -176,17 +182,40 @@ services:
     container_name: fastllm-whisper
     image: ictrektech/whisper:latest
     networks:
-      fastllm: null
+      fastllm:
+        ipv4_address: 172.28.1.6
     ports:
       - mode: ingress
         target: 10095
         published: "30095"
         protocol: tcp
     restart: always
+  ollama:
+    container_name: fastllm-ollama
+    image: ictrektech/ollama_server:arm_latest
+    restart: always
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true  # 启用标准输入
+    tty: true         # 启用伪终端
+    environment:
+      - MAX_MODEL_LEN=32768
+      # - HTTP_PROXY=http://192.168.1.91:7897
+      # - HTTPS_PROXY=http://192.168.1.91:7897
+    volumes:
+      - ${HOME}/.ollama:/root/.ollama
+    ports:
+      - "22299:11434"
+      - "11434:11434"
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.7
 networks:
   fastllm:
     name: fastllm
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
 volumes:
   es-data:
     name: es-data
