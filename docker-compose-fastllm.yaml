@@ -23,7 +23,7 @@ services:
     ports:
       - mode: ingress
         target: 9200
-        published: "9200"
+        published: "29200"
         protocol: tcp
     restart: always
     volumes:
@@ -56,7 +56,7 @@ services:
     ports:
       - mode: ingress
         target: 5000
-        published: "5000"
+        published: "25000"
         protocol: tcp
     restart: always
     stdin_open: true
@@ -79,11 +79,11 @@ services:
     ports:
       - mode: ingress
         target: 9030
-        published: "9030"
+        published: "29030"
         protocol: tcp
       - mode: ingress
         target: 9050
-        published: "9050"
+        published: "29050"
         protocol: tcp
     restart: always
     volumes:
@@ -119,7 +119,7 @@ services:
     ports:
       - mode: ingress
         target: 3306
-        published: "3306"
+        published: "23306"
         protocol: tcp
     restart: always
     volumes:
@@ -140,11 +140,11 @@ services:
     ports:
       - mode: ingress
         target: 5672
-        published: "5672"
+        published: "25672"
         protocol: tcp
       - mode: ingress
         target: 15672
-        published: "15672"
+        published: "35672"
         protocol: tcp
     restart: always
   redis:
@@ -157,11 +157,11 @@ services:
     ports:
       - mode: ingress
         target: 6379
-        published: "6379"
+        published: "26379"
         protocol: tcp
       - mode: ingress
         target: 8001
-        published: "8001"
+        published: "28001"
         protocol: tcp
     restart: always
     volumes:
@@ -180,7 +180,7 @@ services:
     ports:
       - mode: ingress
         target: 10095
-        published: "10095"
+        published: "30095"
         protocol: tcp
     restart: always
 networks:
