@@ -15,7 +15,7 @@ services:
       mysql:
         condition: service_healthy
         required: true
-    image: ictrektech/fastllm:1.5
+    image: ictrektech/fastllm:arm_1.1.97
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
@@ -180,7 +180,7 @@ services:
       - bash
       - /root/whisper_run.sh
     container_name: fastllm-whisper
-    image: ictrektech/whisper:latest
+    image: ictrektech/whisper:arm_latest
     networks:
       fastllm:
         ipv4_address: 172.28.1.8
