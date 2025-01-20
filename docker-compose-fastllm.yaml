@@ -203,7 +203,6 @@ services:
       - ${HOME}/.ollama:/root/.ollama
     ports:
       - "22299:11434"
-      - "11434:11434"
     networks:
       fastllm:
         ipv4_address: 172.28.1.9
