@@ -41,7 +41,18 @@ fi
 echo "读取到容器名称：$CONTAINER_NAME"
 
 # 拉取模型文件
-for MODEL in ictrek/ds:r1.1.5b32k ictrek/ds:r1.7b32k ictrek/ds:v3.3b32k ictrek/cpmv:32k ictrek/qwen2.5:1.5b32k ictrek/qwen2.5:3b32k ictrek/qwen2.5:coder3b32k
+MODELS=(
+    "ictrek/ds:r1_1.5b32k"
+    "ictrek/ds:r1_7b32k"
+    "ictrek/ds:v3_3b32k"
+    "ictrek/cpmv:32k"
+    "ictrek/qwen2.5:1.5b32k"
+    "ictrek/qwen2.5:3b32k"
+    "ictrek/qwen2.5:coder3b32k"
+    "ed5/qwen2.5-coder-cline:3b-instruct-q4_0"
+)
+
+for MODEL in "${MODELS[@]}"
 do
     docker exec -it "$CONTAINER_NAME" ollama pull "$MODEL"
     if [ $? -ne 0 ]; then
