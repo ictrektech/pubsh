@@ -16,6 +16,7 @@ services:
         condition: service_healthy
         required: true
     image: ictrektech/fastllm:arm_1.1.97
+#   image: ictrektech/fastllm:arm_1.2.10
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
