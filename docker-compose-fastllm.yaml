@@ -201,7 +201,7 @@ services:
     environment:
       - MAX_MODEL_LEN=32768
     volumes:
-      - ${HOME}/.ollama:/root/.ollama
+      - ${HOME}/workspace-docker/.ollama:/root/.ollama
     ports:
       - "22299:11434"
     networks:
