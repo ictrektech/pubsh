@@ -51,7 +51,6 @@ MODELS=(
     "ictrek/qwen2.5:3b32k"
     "ictrek/qwen2.5:coder3b32k"
     "ictrek/qwen2.5:coder7b32k"
-    "ed5/qwen2.5-coder-cline:3b-instruct-q4_0"
 )
 
 for MODEL in "${MODELS[@]}"
