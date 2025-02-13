@@ -215,3 +215,52 @@ networks:
       config:
         - subnet: 172.28.1.0/24
 volumes:
+  es-data:
+    name: es-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/volumes/es-data'
+  es-log:
+    name: es-log
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/volumes/es-log'
+  minio-config:
+    name: minio-config
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/volumes/minio-config'
+  minio-data:
+    name: minio-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/volumes/minio-data'
+  mysql-data:
+    name: mysql-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/volumes/mysql-data'
+  redis-data:
+    name: redis-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/volumes/redis-data'
+  ollama:
+    name: ollama
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/volumes/ollama'
