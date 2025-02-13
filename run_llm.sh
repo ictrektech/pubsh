@@ -56,6 +56,7 @@ MODELS=(
 
 for MODEL in "${MODELS[@]}"
 do
+    echo "pulling $MODEL ..."
     docker exec -it "$CONTAINER_NAME" ollama pull "$MODEL"
     if [ $? -ne 0 ]; then
         echo "拉取模型 $MODEL 失败！"
