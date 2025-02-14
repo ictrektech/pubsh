@@ -59,7 +59,7 @@ do
     docker exec -it "$CONTAINER_NAME" ollama pull "$MODEL"
     if [ $? -ne 0 ]; then
         echo "拉取模型 $MODEL 失败！"
-        exit 1
+        # exit 1
     fi
 done
 
