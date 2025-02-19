@@ -19,7 +19,7 @@ services:
         protocol: tcp
     restart: always
     stdin_open: true
-    environment: # 其他的模型也是这些
+    environment: # 其他的模型也是这些信息，然后调用 llm.add_client
       - LLM_CHAT_HOST="172.28.1.9"
       - LLM_CHAT_PORT=11434
       - LLM_CHAT_MODEL="ictrek/qwen2.5:3b32k"
