@@ -49,11 +49,11 @@ services:
         protocol: tcp
     restart: always
     volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/chatbot/minio-data
+      - type: volume
+        source: minio-data
         target: /data
-      - type: bind
-        source: /home/ictrek/workspace-docker/chatbot/minio-config
+      - type: volume
+        source: minio-config
         target: /root/.config
   whisper:
     command:
@@ -75,19 +75,41 @@ services:
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
     restart: always
     command: ["bash", "/root/ollama_run.sh"]
-    stdin_open: true  # ~P~T| ~G~G~F~S~E
-    tty: true         # ~P~T伪~H端
+    stdin_open: true
+    tty: true
     environment:
       - MAX_MODEL_LEN=32768
     volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/chatbot/ollama
+      - type: volume
+        source: ollama
         target: /root/.ollama
     ports:
       - "22299:11434"
     networks:
       fastllm:
         ipv4_address: 172.28.1.9
+volumes:
+  minio-config:
+    name: minio-config
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/chatbot/minio-config'
+  minio-data:
+    name: minio-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/chatbot/minio-data'
+  ollama:
+    name: ollama
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/chatbot/ollama'
 networks:
   fastllm:
     name: fastllm
