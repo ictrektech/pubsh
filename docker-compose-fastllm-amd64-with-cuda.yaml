@@ -1,0 +1,139 @@
+name: docker
+services:
+  fastllm:
+    command: # tail -f /dev/null
+      - sh
+      - -c
+      - |
+        celery -A task worker -l info > log/celery.log 2> log/celery.log &
+        python3.11 main.py > log/flask.log 2> log/flask.log
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.28
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - mode: ingress
+        target: 5000
+        published: "25000"
+        protocol: tcp
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - type: bind
+        source: /home/ictrek/workspace-docker/resource/deepdoc
+        target: /root/fastllm/res/deepdoc
+      - type: bind
+        source: /home/ictrek/workspace-docker/resource/model/bge-large-zh-v1.5
+        target: /root/fastllm/res/model/bge-large-zh-v1.5
+      - type: bind
+        source: /home/ictrek/workspace-docker/resource/model/marqo-fashionSigLIP
+        target: /root/fastllm/res/model/marqo-fashionSigLIP
+      - type: bind
+        source: /home/ictrek/workspace-docker/resource/model/tts
+        target: /root/fastllm/res/model/tts
+      - type: bind
+        source: /home/ictrek/workspace-docker/resource/nltk_data
+        target: /root/nltk_data
+      #    environment: # 其他的模型也是这些信息，然后调用 llm.add_client
+      #      - LLM_CHAT_HOST="172.28.1.9"
+      #      - LLM_CHAT_PORT=11434
+      #      - LLM_CHAT_MODEL="ictrek/qwen2.5:3b32k"
+      #      - LLM_VISION_HOST="172.28.1.9"
+      #      - LLM_VISION_PORT=11434
+      #      - LLM_VISION_MODEL="ictrek/minicpmv:32k"
+      #      - LLM_COT_HOST="172.28.1.9"
+      #      - LLM_COT_PORT=11434
+      #      - LLM_COT_MODEL="ictrek/ds:r1_1.5b32k"
+  minio:
+    command:
+      - server
+      - /data
+    container_name: fastllm-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - mode: ingress
+        target: 9000
+        published: "29000"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: minio-data
+        target: /data
+      - type: volume
+        source: minio-config
+        target: /root/.config
+  whisper:
+    command:
+      - bash
+      - /root/whisper_run.sh
+    container_name: fastllm-whisper
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/whisper_server:amd_cu124_latest
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.8
+    ports:
+      - mode: ingress
+        target: 10095
+        published: "30095"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: /home/ictrek/workspace-docker/resource/model/whisper/ggml-large-v3-q5_0.bin
+        target: /root/models/model.bin
+  ollama:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_cu124_latest
+    restart: always
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true
+    tty: true
+    environment:
+      - MAX_MODEL_LEN=32768
+    volumes:
+      - type: volume
+        source: ollama
+        target: /root/.ollama
+    ports:
+      - "22299:11434"
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+volumes:
+  minio-config:
+    name: minio-config
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/minio/config'
+  minio-data:
+    name: minio-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/minio/data'
+  ollama:
+    name: ollama
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/ollama'
+networks:
+  fastllm:
+    name: fastllm
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
