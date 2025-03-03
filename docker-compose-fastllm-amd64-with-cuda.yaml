@@ -90,6 +90,8 @@ services:
       - type: bind
         source: /home/ictrek/workspace-docker/resource/model/whisper/ggml-large-v3-q5_0.bin
         target: /root/models/model.bin
+    environment:
+      USE_CUDA: true
   ollama:
     container_name: fastllm-ollama
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_cu124_latest
