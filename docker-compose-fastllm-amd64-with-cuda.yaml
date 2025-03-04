@@ -8,7 +8,7 @@ services:
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
         python3.11 main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.29
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.31
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
@@ -36,6 +36,9 @@ services:
       - type: bind
         source: /home/ictrek/workspace-docker/resource/nltk_data
         target: /root/nltk_data
+      - type: bind
+        source: /home/ictrek/workspace-docker/resource/model/faster-whisper-large-v3-int8
+        target: /root/fastllm/res/model/faster-whisper-large-v3-int8
       #    environment: # 其他的模型也是这些信息，然后调用 llm.add_client
       #      - LLM_CHAT_HOST="172.28.1.9"
       #      - LLM_CHAT_PORT=11434
@@ -71,27 +74,6 @@ services:
       - type: volume
         source: minio-config
         target: /root/.config
-  whisper:
-    command:
-      - bash
-      - /root/whisper_run.sh
-    container_name: fastllm-whisper
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/whisper_server:amd_cu124_latest
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.8
-    ports:
-      - mode: ingress
-        target: 10095
-        published: "30095"
-        protocol: tcp
-    restart: always
-    volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/resource/model/whisper/ggml-large-v3-q5_0.bin
-        target: /root/models/model.bin
-    environment:
-      USE_CUDA: true
   ollama:
     container_name: fastllm-ollama
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_cu124_latest
