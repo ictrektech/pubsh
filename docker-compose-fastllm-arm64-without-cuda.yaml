@@ -8,7 +8,7 @@ services:
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
         python3.11 main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.22
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.27
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
@@ -19,16 +19,6 @@ services:
         protocol: tcp
     restart: always
     stdin_open: true
-    environment: # 其他的模型也是这些信息，然后调用 llm.add_client
-      - LLM_CHAT_HOST="172.28.1.9"
-      - LLM_CHAT_PORT=11434
-      - LLM_CHAT_MODEL="ictrek/qwen2.5:3b32k"
-      - LLM_VISION_HOST="172.28.1.9"
-      - LLM_VISION_PORT=11434
-      - LLM_VISION_MODEL="ictrek/minicpmv:32k"
-      - LLM_COT_HOST="172.28.1.9"
-      - LLM_COT_PORT=11434
-      - LLM_COT_MODEL="ictrek/ds:r1_1.5b32k"
     tty: true
   minio:
     command:
@@ -55,21 +45,6 @@ services:
       - type: volume
         source: minio-config
         target: /root/.config
-  whisper:
-    command:
-      - bash
-      - /root/whisper_run.sh
-    container_name: fastllm-whisper
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/whisper:arm_latest
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.8
-    ports:
-      - mode: ingress
-        target: 10095
-        published: "30095"
-        protocol: tcp
-    restart: always
   ollama:
     container_name: fastllm-ollama
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
