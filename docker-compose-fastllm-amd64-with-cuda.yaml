@@ -76,13 +76,8 @@ services:
         target: /root/.config
   ollama:
     container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_cu124_latest
+    image: ollama/ollama
     restart: always
-    command: ["bash", "/root/ollama_run.sh"]
-    stdin_open: true
-    tty: true
-    environment:
-      - MAX_MODEL_LEN=32768
     volumes:
       - type: volume
         source: ollama
