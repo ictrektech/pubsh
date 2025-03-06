@@ -66,7 +66,7 @@ services:
         target: /root/.config
   ollama:
     container_name: fastllm-ollama
-    image: ollama/ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
     restart: always
     volumes:
       - type: volume
