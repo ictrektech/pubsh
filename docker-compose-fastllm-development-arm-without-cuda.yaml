@@ -1,0 +1,208 @@
+name: docker
+services:
+  fastllm:
+    command: # tail -f /dev/null
+      # - sh
+      # - -c
+      # - |
+      #   celery -A task worker -l info > log/celery.log 2> log/celery.log &
+      #   python3.11 main.py > log/flask.log 2> log/flask.log
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.28
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - mode: ingress
+        target: 5000
+        published: "25000"
+        protocol: tcp
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - type: bind
+        source: /data/jzy/resource/deepdoc
+        target: /root/fastllm/res/deepdoc
+      - type: bind
+        source: /data/jzy/resource/model/bge-large-zh-v1.5
+        target: /root/fastllm/res/model/bge-large-zh-v1.5
+      - type: bind
+        source: /data/jzy/resource/model/marqo-fashionSigLIP
+        target: /root/fastllm/res/model/marqo-fashionSigLIP
+      - type: bind
+        source: /data/jzy/resource/model/tts
+        target: /root/fastllm/res/model/tts
+      - type: bind
+        source: /data/jzy/resource/nltk_data
+        target: /root/nltk_data
+      - type: bind
+        source: /data/jzy/resource/model/faster-whisper-large-v3-int8
+        target: /root/fastllm/res/model/faster-whisper-large-v3-int8
+  minio:
+    command:
+      - server
+      - /data
+    container_name: fastllm-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/minio:RELEASE.2021-04-22T15-44-28Z
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - mode: ingress
+        target: 9000
+        published: "29000"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: minio-data
+        target: /data
+      - type: volume
+        source: minio-config
+        target: /root/.config
+  ollama:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
+    restart: always
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true
+    tty: true
+    environment:
+      - MAX_MODEL_LEN=32768
+    volumes:
+      - type: volume
+        source: ollama
+        target: /root/.ollama
+    ports:
+      - "22299:11434"
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+  elasticsearch:
+    container_name: fastllm-elasticsearch
+    environment:
+      ELASTIC_PASSWORD: "123456"
+      ES_JAVA_OPTS: -Xms750m -Xmx750m
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/elasticsearch:8.17.2
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.4
+    volumes:
+      - type: volume
+        source: es-data
+        target: /usr/share/elasticsearch/data
+      - type: volume
+        source: es-log
+        target: /usr/share/elasticsearch/logs
+    ports:
+      - mode: ingress
+        target: 9200
+        published: "29200"
+        protocol: tcp
+    restart: always
+  redis:
+    container_name: fastllm-redis
+    environment:
+      REDIS_ARGS: --requirepass 123456
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/redis:latest
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.6
+    ports:
+      - mode: ingress
+        target: 6379
+        published: "26379"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: volume
+        source: redis-data
+        target: /data
+  mariadb:
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_bin
+      - --max-connections=3000
+    container_name: fastllm-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: "Mm123456"
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/mariadb:11
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.3
+    volumes:
+      - type: volume
+        source: mariadb-data
+        target: /var/lib/mysql
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "23306"
+        protocol: tcp
+    restart: always
+volumes:
+  minio-config:
+    name: minio-config
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/minio/config'
+  minio-data:
+    name: minio-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/minio/data'
+  ollama:
+    name: ollama
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/ollama'
+  es-data:
+    name: es-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/elasticsearch/data'
+  es-log:
+    name: es-log
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/elasticsearch/log'
+  redis-data:
+    name: redis-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/redis/data'
+  mariadb-data:
+    name: mariadb-data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/home/ictrek/workspace-docker/mariadb/data'
+networks:
+  fastllm:
+    name: fastllm
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
