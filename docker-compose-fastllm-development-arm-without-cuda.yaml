@@ -131,7 +131,7 @@ services:
     container_name: fastllm-redis
     environment:
       REDIS_ARGS: --requirepass Rr123456
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/redis:latest
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/redis:latest
     networks:
       fastllm:
         ipv4_address: 172.28.1.6
