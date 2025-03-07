@@ -174,49 +174,49 @@ volumes:
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ictrek/workspace-docker/minio/config'
+      device: '/data/jzy/volume/minio/config'
   minio-data:
     name: minio-data
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ictrek/workspace-docker/minio/data'
+      device: '/data/jzy/volume/minio/data'
   ollama:
     name: ollama
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ictrek/workspace-docker/ollama'
+      device: '/data/jzy/volume/ollama'
   es-data:
     name: es-data
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ictrek/workspace-docker/elasticsearch/data'
+      device: '/data/jzy/volume/elasticsearch/data'
   es-log:
     name: es-log
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ictrek/workspace-docker/elasticsearch/log'
+      device: '/data/jzy/volume/elasticsearch/log'
   redis-data:
     name: redis-data
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ictrek/workspace-docker/redis/data'
+      device: '/data/jzy/volume/redis/data'
   mariadb-data:
     name: mariadb-data
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/home/ictrek/workspace-docker/mariadb/data'
+      device: '/data/jzy/volume/mariadb/data'
 networks:
   fastllm:
     name: fastllm
