@@ -48,8 +48,10 @@ services:
       MINIO_PORT: 9000
       MINIO_USER: minioadmin
       MINIO_PASSWORD: minioadmin
-      OLLAMA_HOST: 172.28.1.9
-      OLLAMA_PORT: 11434
+      # OLLAMA_HOST: 172.28.1.9
+      # OLLAMA_PORT: 11434
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22299
       ELASTICSEARCH_HOST: 172.28.1.4
       ELASTICSEARCH_PORT: 9200
       ELASTICSEARCH_USER: elastic
@@ -87,19 +89,19 @@ services:
       - type: volume
         source: minio-config
         target: /root/.config
-  ollama:
-    container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
-    restart: always
-    volumes:
-      - type: volume
-        source: ollama
-        target: /root/.ollama
-    ports:
-      - "22299:11434"
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.9
+  # ollama:
+  #   container_name: fastllm-ollama
+  #   image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
+  #   restart: always
+  #   volumes:
+  #     - type: volume
+  #       source: ollama
+  #       target: /root/.ollama
+  #   ports:
+  #     - "22299:11434"
+  #   networks:
+  #     fastllm:
+  #       ipv4_address: 172.28.1.9
   elasticsearch:
     container_name: fastllm-elasticsearch
     environment:
@@ -182,13 +184,13 @@ volumes:
       type: 'none'
       o: 'bind'
       device: '/data/jzy/volume/minio/data'
-  ollama:
-    name: ollama
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/data/jzy/volume/ollama'
+  # ollama:
+  #   name: ollama
+  #   driver: local
+  #   driver_opts:
+  #     type: 'none'
+  #     o: 'bind'
+  #     device: '/data/jzy/volume/ollama'
   es-data:
     name: es-data
     driver: local
