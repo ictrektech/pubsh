@@ -1,4 +1,4 @@
-name: docker
+name: chatbot
 services:
   fastllm:
     command: # tail -f /dev/null
