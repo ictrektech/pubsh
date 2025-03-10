@@ -158,7 +158,8 @@ services:
       - --max-connections=3000
     container_name: fastllm-mariadb
     environment:
-      MARIADB_ROOT_PASSWORD: "Mm123456"
+      MARIADB_ROOT_PASSWORD: Mm123456
+      MARIADB_DATABASE: fastllm
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/mariadb:11
     networks:
       fastllm:
