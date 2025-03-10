@@ -155,7 +155,7 @@ services:
     container_name: fastllm-mariadb
     environment:
       MARIADB_ROOT_PASSWORD: "Mm123456"
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/mariadb:11
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/mariadb:11
     networks:
       fastllm:
         ipv4_address: 172.28.1.3
