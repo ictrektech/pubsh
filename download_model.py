@@ -44,3 +44,10 @@ snapshot_download(
     local_dir_use_symlinks=False,
     resume_download=True
 )
+# 搜图模型
+snapshot_download(
+    repo_id='BAAI/BGE-VL-MLLM-S2',
+    local_dir='/home/ictrek/resource/model/BGE-VL-MLLM-S2',
+    local_dir_use_symlinks=False,
+    resume_download=True
+)
