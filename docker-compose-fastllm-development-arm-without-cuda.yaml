@@ -8,7 +8,7 @@ services:
       #   celery -A task worker -l info > log/celery.log 2> log/celery.log &
       #   python3.11 main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.31
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.32
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
@@ -43,6 +43,9 @@ services:
       - type: bind
         source: /data/jzy/resource/model/faster-whisper-large-v3-int8
         target: /root/fastllm/res/model/faster-whisper-large-v3-int8
+      - type: bind
+        source: /data/jzy/resource/model/BGE-VL-base
+        target: /root/fastllm/res/model/BGE-VL-base
     environment:
       MARIADB_HOST: 172.28.1.3
       MARIADB_PORT: 3306
