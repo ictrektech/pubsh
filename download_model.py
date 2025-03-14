@@ -51,3 +51,12 @@ snapshot_download(
     local_dir_use_symlinks=False,
     resume_download=True
 )
+# 搜图模型
+snapshot_download(
+    repo_id='BAAI/BGE-VL-base',
+    revision='1aba80d3faf358474cfdd26baccda8b4f7ff2f35',
+    local_dir='/home/ictrek/resource/model/BGE-VL-base',
+    local_dir_use_symlinks=False,
+    resume_download=True
+)
+
