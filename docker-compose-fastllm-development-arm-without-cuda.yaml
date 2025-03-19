@@ -202,7 +202,7 @@ services:
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/mariadb:11
     healthcheck:
       test:
-        - CMD-SHELL
+        - CMD
         - healthcheck.sh
         - --connect
         - --innodb_initialized
