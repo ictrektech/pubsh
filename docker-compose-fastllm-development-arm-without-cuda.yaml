@@ -11,6 +11,19 @@ services:
       #   python3.11 main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.35
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+        required: true
+      minio:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+      mariadb:
+        condition: service_healthy
+        required: true
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
