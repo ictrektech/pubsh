@@ -29,8 +29,8 @@ services:
         source: /data/jzy/resource/deepdoc
         target: /root/fastllm/res/deepdoc
       - type: bind
-        source: /data/jzy/resource/model/bge-large-zh-v1.5
-        target: /root/fastllm/res/model/bge-large-zh-v1.5
+        source: /data/jzy/resource/model/bge-m3
+        target: /root/fastllm/res/model/bge-m3
       - type: bind
         source: /data/jzy/resource/model/marqo-fashionSigLIP
         target: /root/fastllm/res/model/marqo-fashionSigLIP
