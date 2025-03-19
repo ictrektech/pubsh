@@ -1,14 +1,16 @@
 name: chatbot
 services:
   fastllm:
-    command: # tail -f /dev/null
-      # - sh
-      # - -c
-      # - |
-      #   celery -A task worker -l info > log/celery.log 2> log/celery.log &
+    command: 
+      - sh
+      - -c
+      - |
+        celery -A task worker -l info > log/celery.log 2> log/celery.log &
+        service ssh start
+        tail -f /dev/null
       #   python3.11 main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.32
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.35
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
