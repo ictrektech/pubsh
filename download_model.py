@@ -17,9 +17,15 @@ snapshot_download(
     resume_download=True
 )
 # embedding模型
+# snapshot_download(
+#     repo_id='BAAI/bge-large-zh-v1.5',
+#     local_dir='./res/model/bge-large-zh-v1.5',
+#     local_dir_use_symlinks=False,
+#     resume_download=True
+# )
 snapshot_download(
-    repo_id='BAAI/bge-large-zh-v1.5',
-    local_dir='./res/model/bge-large-zh-v1.5',
+    repo_id='BAAI/bge-m3',
+    local_dir='./res/model/bge-m3',
     local_dir_use_symlinks=False,
     resume_download=True
 )
