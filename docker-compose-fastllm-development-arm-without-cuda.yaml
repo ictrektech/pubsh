@@ -10,7 +10,7 @@ services:
         tail -f /dev/null
       #   python3.11 main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.36
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.37
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -62,7 +62,7 @@ services:
         source: /data/jzy/resource/model/BGE-VL-base
         target: /root/fastllm/res/model/BGE-VL-base
       - type: bind
-        source: /data/pics/landscape
+        source: /data/pics
         target: /root/picture
     environment:
       MARIADB_HOST: 172.28.1.3
