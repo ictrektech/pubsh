@@ -43,14 +43,16 @@
 # 拉取模型文件
 CONTAINER_NAME="fastllm-ollama"
 MODELS=(
-    "ictrek/ds:r1_1.5b32k"
-    "ictrek/ds:r1_7b32k"
-    "ictrek/ds:v3_3b32k"
     "ictrek/cpmv:32k"
-    "ictrek/qwen2.5:1.5b32k"
-    "ictrek/qwen2.5:3b32k"
+    "ictrek/ds:r1_1.5b"
+    "ictrek/llama3.2:3b"
     "ictrek/qwen2.5:coder3b32k"
-    "ictrek/qwen2.5:coder7b32k"
+    "ictrek/ds:coder_1.3b"
+    "ictrek/ds:coder_6.7b"
+    "ictrek/qwen2.5:3b32k"
+    "ictrek/qwen2.5:1.5b32k"
+    "ictrek/qwen2.5:7b"
+    "ictrek/ds:coderv2_16b32k"
 )
 
 for MODEL in "${MODELS[@]}"
