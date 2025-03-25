@@ -53,6 +53,7 @@ MODELS=(
     "ictrek/qwen2.5:3b32k"
     "ictrek/qwen2.5:1.5b32k"
     "ictrek/qwen2.5:7b"
+    "ictrek/qwen2.5:7b32k"
     "ictrek/ds:coderv2_16b32k"
 )
 
