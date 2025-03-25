@@ -49,6 +49,7 @@ MODELS=(
     "ictrek/qwen2.5:coder3b32k"
     "ictrek/ds:coder_1.3b"
     "ictrek/ds:coder_6.7b"
+    "ictrek/ds:coder3b32k"
     "ictrek/qwen2.5:3b32k"
     "ictrek/qwen2.5:1.5b32k"
     "ictrek/qwen2.5:7b"
