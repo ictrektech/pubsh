@@ -10,7 +10,7 @@ services:
         tail -f /dev/null
       #   python3.11 -u main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.40
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.41
     depends_on:
       elasticsearch:
         condition: service_healthy
