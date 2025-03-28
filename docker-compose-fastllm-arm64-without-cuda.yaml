@@ -8,7 +8,7 @@ services:
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
         python3.11 -u main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.48
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.49
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
@@ -68,7 +68,7 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       CHAT_MODEL: ictrek/qwen2.5:1.5b32k
-      CHAT_COT_MODEL: ictrek/ds:r1_1.5b32k
+      CHAT_COT_MODEL: ictrek/ds:r1_1.5b
       SUMMARY_MODEL: ictrek/qwen2.5:1.5b32k
   minio:
     command:
