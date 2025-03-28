@@ -121,19 +121,6 @@ services:
       - type: volume
         source: minio-config
         target: /root/.config
-  # ollama:
-  #   container_name: fastllm-ollama
-  #   image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
-  #   restart: always
-  #   volumes:
-  #     - type: volume
-  #       source: ollama
-  #       target: /root/.ollama
-  #   ports:
-  #     - "22299:11434"
-  #   networks:
-  #     fastllm:
-  #       ipv4_address: 172.28.1.9
   elasticsearch:
     container_name: fastllm-elasticsearch
     environment:
@@ -240,13 +227,6 @@ volumes:
       type: 'none'
       o: 'bind'
       device: '/data/jzy/volume/minio/data'
-  # ollama:
-  #   name: ollama
-  #   driver: local
-  #   driver_opts:
-  #     type: 'none'
-  #     o: 'bind'
-  #     device: '/data/jzy/volume/ollama'
   es-data:
     name: es-data
     driver: local
