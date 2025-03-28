@@ -45,6 +45,7 @@ CONTAINER_NAME="fastllm-ollama"
 MODELS=(
     "ictrek/cpmv:32k"
     "ictrek/ds:r1_1.5b"
+    "ictrek/ds:r1_7"
     "ictrek/llama3.2:3b"
     "ictrek/qwen2.5:coder3b32k"
     "ictrek/ds:coder_1.3b"
