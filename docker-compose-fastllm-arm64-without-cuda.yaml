@@ -97,13 +97,15 @@ services:
         target: /root/.config
   ollama:
     container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_official
     restart: always
     command: ["bash", "/root/ollama_run.sh"]
     stdin_open: true
     tty: true
     environment:
       - MAX_MODEL_LEN=32768
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=2
     volumes:
       - type: bind
         source: /home/ictrek/workspace-docker/ollama
