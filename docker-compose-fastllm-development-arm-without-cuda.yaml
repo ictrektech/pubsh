@@ -86,9 +86,9 @@ services:
       REDIS_USER: default
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
-      CHAT_MODEL: ictrek/qwen1.5B:32k
+      CHAT_MODEL: ictrek/qwen2.5:1.5b32k
       CHAT_COT_MODEL: ictrek/ds:r1_1.5b
-      SUMMARY_MODEL: ictrek/qwen1.5B:32k
+      SUMMARY_MODEL: ictrek/qwen2.5:1.5b32k
   minio:
     command:
       - server
