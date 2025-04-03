@@ -8,9 +8,9 @@ services:
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
         service ssh start
         tail -f /dev/null
-      #   python3.11 -u main.py > log/flask.log 2> log/flask.log
+      #   python3.11 -u main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.40
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.39
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -41,28 +41,28 @@ services:
     tty: true
     volumes:
       - type: bind
-        source: /data/jzy/resource/deepdoc
+        source: /home/jzy/resource/deepdoc
         target: /root/fastllm/res/deepdoc
       - type: bind
-        source: /data/jzy/resource/model/bge-m3
+        source: /home/jzy/resource/model/bge-m3
         target: /root/fastllm/res/model/bge-m3
       - type: bind
-        source: /data/jzy/resource/model/marqo-fashionSigLIP
+        source: /home/jzy/resource/model/marqo-fashionSigLIP
         target: /root/fastllm/res/model/marqo-fashionSigLIP
       - type: bind
-        source: /data/jzy/resource/model/tts
+        source: /home/jzy/resource/model/tts
         target: /root/fastllm/res/model/tts
       - type: bind
-        source: /data/jzy/resource/nltk_data
+        source: /home/jzy/resource/nltk_data
         target: /root/nltk_data
       - type: bind
-        source: /data/jzy/resource/model/faster-whisper-large-v3-int8
+        source: /home/jzy/resource/model/faster-whisper-large-v3-int8
         target: /root/fastllm/res/model/faster-whisper-large-v3-int8
       - type: bind
-        source: /data/jzy/resource/model/BGE-VL-base
+        source: /home/jzy/resource/model/BGE-VL-base
         target: /root/fastllm/res/model/BGE-VL-base
       - type: bind
-        source: /data/pics
+        source: /home/jzy/picture
         target: /root/picture
     environment:
       MARIADB_HOST: 172.28.1.3
@@ -86,9 +86,9 @@ services:
       REDIS_USER: default
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
-      CHAT_MODEL: ictrek/qwen1.5B:32k
-      CHAT_COT_MODEL: ictrek/ds:r1_1.5b32k
-      SUMMARY_MODEL: ictrek/qwen1.5B:32k
+      CHAT_MODEL: ictrek/qwen2.5:7b
+      CHAT_COT_MODEL: ictrek/ds:r1_7b32k
+      SUMMARY_MODEL: ictrek/qwen2.5:7b
   minio:
     command:
       - server
@@ -97,7 +97,7 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/minio:RELEASE.2021-04-22T15-44-28Z
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
     healthcheck:
       test:
         - CMD-SHELL
@@ -115,25 +115,12 @@ services:
         protocol: tcp
     restart: always
     volumes:
-      - type: volume
-        source: minio-data
+      - type: bind
+        source: /home/jzy/minio/data
         target: /data
-      - type: volume
-        source: minio-config
+      - type: bind
+        source: /home/jzy/minio/config
         target: /root/.config
-  # ollama:
-  #   container_name: fastllm-ollama
-  #   image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_latest
-  #   restart: always
-  #   volumes:
-  #     - type: volume
-  #       source: ollama
-  #       target: /root/.ollama
-  #   ports:
-  #     - "22299:11434"
-  #   networks:
-  #     fastllm:
-  #       ipv4_address: 172.28.1.9
   elasticsearch:
     container_name: fastllm-elasticsearch
     environment:
@@ -144,7 +131,7 @@ services:
       xpack.security.enabled: "true"
       xpack.security.http.ssl.enabled: "false"
       xpack.security.transport.ssl.enabled: "false"
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/elasticsearch:8.17.2
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/elasticsearch:8.17.2
     healthcheck:
       test:
         - CMD-SHELL
@@ -156,11 +143,11 @@ services:
       fastllm:
         ipv4_address: 172.28.1.4
     volumes:
-      - type: volume
-        source: es-data
+      - type: bind
+        source: /home/jzy/elasticsearch/data
         target: /usr/share/elasticsearch/data
-      - type: volume
-        source: es-log
+      - type: bind
+        source: /home/jzy/elasticsearch/log
         target: /usr/share/elasticsearch/logs
     ports:
       - mode: ingress
@@ -172,7 +159,7 @@ services:
     container_name: fastllm-redis
     environment:
       REDIS_ARGS: --requirepass Rr123456
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/redis:latest
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/redis:latest
     healthcheck:
       test:
         - CMD-SHELL
@@ -190,8 +177,8 @@ services:
         protocol: tcp
     restart: always
     volumes:
-      - type: volume
-        source: redis-data
+      - type: bind
+        source: /home/jzy/redis/data
         target: /data
   mariadb:
     command:
@@ -202,7 +189,7 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: Mm123456
       MARIADB_DATABASE: fastllm
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/mariadb:11
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/mariadb:11
     healthcheck:
       test:
         - CMD
@@ -216,8 +203,8 @@ services:
       fastllm:
         ipv4_address: 172.28.1.3
     volumes:
-      - type: volume
-        source: mariadb-data
+      - type: bind
+        source: /home/jzy/mariadb/data
         target: /var/lib/mysql
     ports:
       - mode: ingress
@@ -225,56 +212,6 @@ services:
         published: "23306"
         protocol: tcp
     restart: always
-volumes:
-  minio-config:
-    name: minio-config
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/data/jzy/volume/minio/config'
-  minio-data:
-    name: minio-data
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/data/jzy/volume/minio/data'
-  # ollama:
-  #   name: ollama
-  #   driver: local
-  #   driver_opts:
-  #     type: 'none'
-  #     o: 'bind'
-  #     device: '/data/jzy/volume/ollama'
-  es-data:
-    name: es-data
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/data/jzy/volume/elasticsearch/data'
-  es-log:
-    name: es-log
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/data/jzy/volume/elasticsearch/log'
-  redis-data:
-    name: redis-data
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/data/jzy/volume/redis/data'
-  mariadb-data:
-    name: mariadb-data
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/data/jzy/volume/mariadb/data'
 networks:
   fastllm:
     name: fastllm
