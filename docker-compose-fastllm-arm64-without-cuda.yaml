@@ -6,7 +6,7 @@ services:
       - -c
       - |
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
-        python3.11 -u main.py > log/flask.log 2> log/flask.log
+        python3.11 -u main.py
     container_name: fastllm-server
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.53
     networks:
