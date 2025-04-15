@@ -57,6 +57,8 @@ MODELS=(
     "ictrek/qwen2.5:7b32k"
     "ictrek/ds:coderv2_16b32k"
     "ictrek/mobile-vlm:3b-fp16"
+    "gemma3:1b"
+    "gemma3:4b"
 )
 
 for MODEL in "${MODELS[@]}"
