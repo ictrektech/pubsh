@@ -10,7 +10,7 @@ services:
         tail -f /dev/null
       #   python3.11 -u main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.55
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.56
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -35,6 +35,10 @@ services:
       - mode: ingress
         target: 22
         published: "2222"
+        protocol: tcp
+      - mode: ingress
+        target: 8888
+        published: "28888"
         protocol: tcp
     restart: always
     stdin_open: true
@@ -75,8 +79,8 @@ services:
       MINIO_PASSWORD: minioadmin
       # OLLAMA_HOST: 172.28.1.9
       # OLLAMA_PORT: 11434
-      OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 22299
+      OLLAMA_HOST: 192.168.1.168
+      OLLAMA_PORT: 8080
       ELASTICSEARCH_HOST: 172.28.1.4
       ELASTICSEARCH_PORT: 9200
       ELASTICSEARCH_USER: elastic
