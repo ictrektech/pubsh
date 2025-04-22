@@ -40,8 +40,8 @@ services:
         source: /home/ictrek/workspace-docker/model/faster-whisper-large-v3-int8
         target: /root/fastllm/res/model/faster-whisper-large-v3-int8
       - type: bind
-        source: /home/ictrek/workspace-docker/model/BGE-VL-base
-        target: /root/fastllm/res/model/BGE-VL-base
+        source: /home/ictrek/workspace-docker/model/BGE-VL-large
+        target: /root/fastllm/res/model/BGE-VL-large
       - type: bind
         source: /home/ictrek/workspace-docker/v1000/data/nas/root
         target: /root/picture
