@@ -8,7 +8,7 @@ services:
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
         python3.11 -u main.py > log/flask.log 2> log/flask.log
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.43
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.44
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
