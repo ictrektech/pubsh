@@ -6,7 +6,7 @@ services:
       - -c
       - |
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
-        jupyter notebook --allow-root --no-browser --notebook-dir='/root' &
+        jupyter notebook --allow-root --no-browser --notebook-dir='/root' --ip=0.0.0.0 --NotebookApp.token='' &
         service ssh start
         tail -f /dev/null
       #   python3.11 -u main.py
