@@ -20,7 +20,11 @@ RUN echo 'deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main rest
     && apt-get install ffmpeg -y \
     && apt-get install gcc -y \
     && apt-get install openssh-server -y \
-    && apt-get install make cmake build-essential -y
+    && apt-get install make cmake build-essential -y \
+    && curl -o- https://gitee.com/RubyMetric/nvm-cn/raw/main/install.sh | bash \
+    && chmod +x ~/.nvm/nvm.sh \
+    && source ~/.bashrc \
+    && nvm install v14.21.3
 
 # RUN cp -r ./res/nltk_data /root/
 # RUN python3.11 docker/init_nltk.py
