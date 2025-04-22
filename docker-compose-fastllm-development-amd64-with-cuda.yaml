@@ -37,6 +37,10 @@ services:
         target: 22
         published: "2222"
         protocol: tcp
+      - mode: ingress
+        target: 8888
+        published: "28888"
+        protocol: tcp
     restart: always
     stdin_open: true
     tty: true
