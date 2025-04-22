@@ -10,7 +10,7 @@ services:
         tail -f /dev/null
       #   python3.11 -u main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.42
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.43
     depends_on:
       elasticsearch:
         condition: service_healthy
