@@ -59,8 +59,8 @@ services:
         source: /home/jzy/resource/model/faster-whisper-large-v3-int8
         target: /root/fastllm/res/model/faster-whisper-large-v3-int8
       - type: bind
-        source: /home/jzy/resource/model/BGE-VL-base
-        target: /root/fastllm/res/model/BGE-VL-base
+        source: /home/jzy/resource/model/BGE-VL-large
+        target: /root/fastllm/res/model/BGE-VL-large
       - type: bind
         source: /home/jzy/picture
         target: /root/picture
