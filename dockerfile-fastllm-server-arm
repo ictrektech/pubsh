@@ -1,0 +1,42 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+WORKDIR /root/fastllm
+
+COPY . .
+
+RUN echo 'deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse' >> /etc/apt/sources.list \
+    && echo 'deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse' >> /etc/apt/sources.list \
+    && echo 'deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse' >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install ca-certificates -y && update-ca-certificates \
+    && apt-get install python3.11 -y \
+    && apt-get install python3.11-dev -y \
+    && apt-get install curl -y \
+    && curl https://bootstrap.pypa.io/get-pip.py -o ~/get-pip.py \
+    && python3.11 ~/get-pip.py \
+    && apt-get install libgl1-mesa-glx -y \
+    && apt-get install vim -y \
+    && apt-get install ffmpeg -y \
+    && apt-get install gcc -y \
+    && apt-get install openssh-server -y \
+    && apt-get install make cmake build-essential -y
+
+# RUN cp -r ./res/nltk_data /root/
+# RUN python3.11 docker/init_nltk.py
+
+RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config \
+    && /etc/init.d/ssh restart \
+    && echo 'root:123456' | chpasswd
+
+RUN export RUSTUP_DIST_SERVER=https://mirrors.tuna.tsinghua.edu.cn/rustup \
+    && curl https://sh.rustup.rs -sSf -o ~/rust.sh \
+    && sed -i 's|^\(RUSTUP_UPDATE_ROOT="${RUSTUP_UPDATE_ROOT:-\).*|\1https://mirrors.ustc.edu.cn/rust-static/rustup}"|g' ~/rust.sh \
+    && bash ~/rust.sh -y
+
+RUN echo 'export PATH=$HOME/.cargo/bin:$PATH' >> ~/.bashrc \
+    && . ~/.bashrc \
+    && pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# RUN playwright install chromium && playwright install-deps
+
