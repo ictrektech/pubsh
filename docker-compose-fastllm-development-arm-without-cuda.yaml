@@ -6,11 +6,12 @@ services:
       - -c
       - |
         celery -A task worker -l info > log/celery.log 2> log/celery.log &
+        jupyter notebook --allow-root --no-browser --ip=0.0.0.0 --notebook-dir='/root/' &
         service ssh start
         tail -f /dev/null
       #   python3.11 -u main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.57
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.58
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -56,6 +57,9 @@ services:
       - type: bind
         source: /data/jzy/resource/model/tts
         target: /root/fastllm/res/model/tts
+      - type: bind
+        source: /data/jzy/resource/model/Spark-TTS-0.5B
+        target: /root/fastllm/res/model/Spark-TTS-0.5B
       - type: bind
         source: /data/jzy/resource/nltk_data
         target: /root/nltk_data
