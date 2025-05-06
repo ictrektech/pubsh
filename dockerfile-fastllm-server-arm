@@ -24,7 +24,9 @@ RUN echo 'deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main rest
     && curl -o- https://gitee.com/RubyMetric/nvm-cn/raw/main/install.sh | bash \
     && chmod +x ~/.nvm/nvm.sh \
     && source ~/.bashrc \
-    && nvm install --default 20
+    && nvm install --default 20 \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && source $HOME/.local/bin/env
 
 # RUN cp -r ./res/nltk_data /root/
 # RUN python3.11 docker/init_nltk.py
