@@ -54,6 +54,7 @@ MODELS=(
     "ictrek/qwen3:1.7b16k"
     "ictrek/qwen3:4b16k"
     "ictrek/qwen3:8b16k"
+    "qwen3:4b"
     "ictrek/ds:coderv2_16b32k"
     "ictrek/mobile-vlm:3b-fp16"
     "gemma3:1b"
