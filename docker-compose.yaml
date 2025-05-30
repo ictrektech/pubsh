@@ -1,0 +1,673 @@
+name: fastllm
+services:
+# arm-dev
+  fastllm-arm-dev:
+    command: 
+      - sh
+      - -c
+      - |
+        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        service ssh start
+        tail -f /dev/null
+        # /root/.local/bin/uv run main.py
+    container_name: fastllm-server
+    build:
+      target: arm-dev
+      context: ../
+      dockerfile: docker/dockerfile
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_dev_1.2.61
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    depends_on:
+      elasticsearch-arm-dev:
+        condition: service_healthy
+        required: true
+      mariadb-arm-dev:
+        condition: service_healthy
+        required: true
+      minio-arm-dev:
+        condition: service_healthy
+        required: true
+      redis-arm-dev:
+        condition: service_healthy
+        required: true
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+      - 2222:22
+    profiles:
+      - arm-dev
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - /data/jzy/resource/deepdoc:/root/fastllm/res/deepdoc
+      - /data/jzy/resource/model/bge-m3:/root/fastllm/res/model/bge-m3
+      - /data/jzy/resource/model/tts:/root/fastllm/res/model/tts
+      - /data/jzy/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
+      - /data/jzy/resource/nltk_data:/root/nltk_data
+      - /data/jzy/resource/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
+      - /data/jzy/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
+      - /data/jzy/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /data/jzy/resource/picture:/root/picture
+      - /data/jzy/shell:/root/shell
+    environment:
+      MARIADB_HOST: 172.28.1.3
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      ELASTICSEARCH_HOST: 172.28.1.4
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.6
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22299
+      CHAT_MODEL: ictrek/qwen3:1.7b16k
+      CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+  mariadb-arm-dev:
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_bin
+      - --max-connections=3000
+    container_name: fastllm-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: Mm123456
+      MARIADB_DATABASE: fastllm
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/mariadb:11
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.3
+    volumes:
+      - /data/jzy/volume/mariadb/data:/var/lib/mysql
+    ports:
+      - 23306:3306
+    profiles:
+      - arm-dev
+    restart: always
+  elasticsearch-arm-dev:
+    container_name: fastllm-elasticsearch
+    environment:
+      ELASTIC_PASSWORD: "Ee123456"
+      ES_JAVA_OPTS: -Xms750m -Xmx750m
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/elasticsearch:8.17.2
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://elastic:Ee123456@localhost:9200
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.4
+    volumes:
+      - /data/jzy/volume/elasticsearch/data:/usr/share/elasticsearch/data
+      - /data/jzy/volume/elasticsearch/log:/usr/share/elasticsearch/logs
+    ports:
+      - 29200:9200
+    profiles:
+      - arm-dev
+    restart: always
+  minio-arm-dev:
+    command:
+      - server
+      - /data
+    container_name: fastllm-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    profiles:
+      - arm-dev
+    restart: always
+    volumes:
+      - /data/jzy/volume/minio/data:/data
+      - /data/jzy/volume/minio/config:/root/.config
+  redis-arm-dev:
+    container_name: fastllm-redis
+    environment:
+      REDIS_ARGS: --requirepass Rr123456
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/redis:latest
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli -a Rr123456 ping
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.6
+    ports:
+      - 26379:6379
+    profiles:
+      - arm-dev
+    restart: always
+    volumes:
+      - /data/jzy/volume/redis/data:/data
+  ollama-arm-dev:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_official_0.7.0
+    restart: always
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true
+    tty: true
+    environment:
+      - MAX_MODEL_LEN=32768
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=2
+    volumes:
+      - type: bind
+        source: /home/ictrek/workspace-docker/ollama
+        target: /root/.ollama
+    profiles:
+      - full
+    ports:
+      - 22299:11434
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+
+# arm-e1001
+  fastllm-arm-e1001:
+    command: 
+      - sh
+      - -c
+      - |
+        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        /root/.local/bin/uv run main.py
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_e1001_1.2.61
+    build:
+      target: arm-e1001
+      context: ../
+      dockerfile: docker/dockerfile
+    depends_on:
+      minio-arm-e1001:
+        condition: service_healthy
+        required: true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+    profiles:
+      - arm-e1001
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - /home/ictrek/workspace-docker/model/deepdoc:/root/fastllm/res/deepdoc
+      - /home/ictrek/workspace-docker/model/bge-m3:/root/fastllm/res/model/bge-m3
+      - /home/ictrek/workspace-docker/model/tts:/root/fastllm/res/model/tts
+      - /home/ictrek/workspace-docker/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
+      - /home/ictrek/workspace-docker/nltk_data:/root/nltk_data
+      - /home/ictrek/workspace-docker/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
+      - /home/ictrek/workspace-docker/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
+      - /home/ictrek/workspace-docker/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/picture
+    environment:
+      MARIADB_HOST: 172.28.1.1
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      ELASTICSEARCH_HOST: 172.28.1.1
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.1
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22299
+      CHAT_MODEL: ictrek/qwen3:1.7b16k
+      CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+  minio-arm-e1001:
+    command:
+      - server
+      - /data
+    container_name: fastllm-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    profiles:
+      - arm-e1001
+    restart: always
+    volumes:
+      - /home/ictrek/workspace-docker/minio/data:/data
+      - /home/ictrek/workspace-docker/minio/config:/root/.config
+  ollama-arm-e1001:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_official_0.7.0
+    restart: always
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true
+    tty: true
+    environment:
+      - MAX_MODEL_LEN=32768
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=2
+    volumes:
+      - type: bind
+        source: /home/ictrek/workspace-docker/ollama
+        target: /root/.ollama
+    profiles:
+      - arm-e1001
+    ports:
+      - 22299:11434
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+
+# amd-dev
+  fastllm-amd-dev:
+    command: 
+      - sh
+      - -c
+      - |
+        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        service ssh start
+        tail -f /dev/null
+        # /root/.local/bin/uv run main.py
+    container_name: fastllm-server
+    build:
+      target: amd-dev
+      context: ../
+      dockerfile: docker/dockerfile
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_dev_1.2.45
+    depends_on:
+      elasticsearch-amd-dev:
+        condition: service_healthy
+        required: true
+      mariadb-amd-dev:
+        condition: service_healthy
+        required: true
+      minio-amd-dev:
+        condition: service_healthy
+        required: true
+      redis-amd-dev:
+        condition: service_healthy
+        required: true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+      - 2222:22
+    profiles:
+      - amd-dev
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - /data/jzy/resource/deepdoc:/root/fastllm/res/deepdoc
+      - /data/jzy/resource/model/bge-m3:/root/fastllm/res/model/bge-m3
+      - /data/jzy/resource/model/tts:/root/fastllm/res/model/tts
+      - /data/jzy/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
+      - /data/jzy/resource/nltk_data:/root/nltk_data
+      - /data/jzy/resource/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
+      - /data/jzy/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
+      - /data/jzy/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /data/jzy/resource/picture:/root/picture
+      - /data/jzy/shell:/root/shell
+    environment:
+      MARIADB_HOST: 172.28.1.3
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      ELASTICSEARCH_HOST: 172.28.1.4
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.6
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22299
+      CHAT_MODEL: ictrek/qwen3:4b16k
+      CHAT_COT_MODEL: ictrek/qwen3:4b16k
+      SUMMARY_MODEL: ictrek/qwen3:4b16k
+  mariadb-amd-dev:
+    container_name: fastllm-mariadb
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: Mm123456
+      MARIADB_DATABASE: fastllm
+    command:
+      - sh
+      - -c
+      - |
+        chmod 777 /tmp
+        docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_bin --max-connections=3000
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.3
+    volumes:
+      - /data/jzy/volume/mariadb/data:/var/lib/mysql
+    ports:
+      - 23306:3306
+    profiles:
+      - amd-dev
+    restart: always
+  elasticsearch-amd-dev:
+    container_name: fastllm-elasticsearch
+    environment:
+      ELASTIC_PASSWORD: "Ee123456"
+      ES_JAVA_OPTS: -Xms750m -Xmx750m
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/elasticsearch:8.17.2
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://elastic:Ee123456@localhost:9200
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.4
+    volumes:
+      - /data/jzy/volume/elasticsearch/data:/usr/share/elasticsearch/data
+      - /data/jzy/volume/elasticsearch/log:/usr/share/elasticsearch/logs
+      - /data/jzy/volume/elasticsearch/tmp:/tmp
+    ports:
+      - 29200:9200
+    profiles:
+      - amd-dev
+    restart: always
+  minio-amd-dev:
+    command:
+      - server
+      - /data
+    container_name: fastllm-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    profiles:
+      - amd-dev
+    restart: always
+    volumes:
+      - /data/jzy/volume/minio/data:/data
+      - /data/jzy/volume/minio/config:/root/.config
+  redis-amd-dev:
+    container_name: fastllm-redis
+    environment:
+      REDIS_ARGS: --requirepass Rr123456
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/redis:latest
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli -a Rr123456 ping
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.6
+    ports:
+      - 26379:6379
+    profiles:
+      - amd-dev
+    restart: always
+    volumes:
+      - /data/jzy/volume/redis/data:/data
+  ollama-amd-dev:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_official_cu124_0.7.0
+    restart: always
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true
+    tty: true
+    environment:
+      - MAX_MODEL_LEN=32768
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=2
+    volumes:
+      - type: bind
+        source: /home/ictrek/workspace-docker/ollama
+        target: /root/.ollama
+    profiles:
+      - full
+    ports:
+      - 22299:11434
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+
+# amd-e1001
+  fastllm-amd-e1001:
+    command: 
+      - sh
+      - -c
+      - |
+        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        /root/.local/bin/uv run main.py
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_e1001_1.2.45
+    build:
+      target: amd-e1001
+      context: ../
+      dockerfile: docker/dockerfile
+    depends_on:
+      minio-amd-e1001:
+        condition: service_healthy
+        required: true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+    profiles:
+      - amd-e1001
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - /home/ictrek/workspace-docker/model/deepdoc:/root/fastllm/res/deepdoc
+      - /home/ictrek/workspace-docker/model/bge-m3:/root/fastllm/res/model/bge-m3
+      - /home/ictrek/workspace-docker/model/tts:/root/fastllm/res/model/tts
+      - /home/ictrek/workspace-docker/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
+      - /home/ictrek/workspace-docker/nltk_data:/root/nltk_data
+      - /home/ictrek/workspace-docker/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
+      - /home/ictrek/workspace-docker/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
+      - /home/ictrek/workspace-docker/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/picture
+    environment:
+      MARIADB_HOST: 172.28.1.1
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      ELASTICSEARCH_HOST: 172.28.1.1
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.1
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22299
+      CHAT_MODEL: ictrek/qwen3:1.7b16k
+      CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+  minio-amd-e1001:
+    command:
+      - server
+      - /data
+    container_name: fastllm-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    profiles:
+      - amd-e1001
+    restart: always
+    volumes:
+      - /home/ictrek/workspace-docker/minio/data:/data
+      - /home/ictrek/workspace-docker/minio/config:/root/.config
+  ollama-amd-e1001:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_official_cu124_0.7.0
+    restart: always
+    command: ["bash", "/root/ollama_run.sh"]
+    stdin_open: true
+    tty: true
+    environment:
+      - MAX_MODEL_LEN=32768
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=2
+    volumes:
+      - type: bind
+        source: /home/ictrek/workspace-docker/ollama
+        target: /root/.ollama
+    profiles:
+      - amd-e1001
+    ports:
+      - 22299:11434
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+networks:
+  fastllm:
+    name: fastllm
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
