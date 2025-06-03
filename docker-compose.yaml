@@ -320,9 +320,7 @@ services:
       - OLLAMA_MAX_LOADED_MODELS=2
       - OLLAMA_NUM_PARALLEL=2
     volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/ollama
-        target: /root/.ollama
+      - /home/ictrek/workspace-docker/ollama:/root/.ollama
     profiles:
       - arm-e1001
     ports:
@@ -371,6 +369,7 @@ services:
     networks:
       fastllm:
         ipv4_address: 172.28.1.2
+    runtime: nvidia
     ports:
       - 25000:5000
       - 2222:22
@@ -530,6 +529,8 @@ services:
     command: ["bash", "/root/ollama_run.sh"]
     stdin_open: true
     tty: true
+    runtime: nvidia
+    # gpus: all
     environment:
       - MAX_MODEL_LEN=32768
       - OLLAMA_MAX_LOADED_MODELS=2
@@ -564,6 +565,7 @@ services:
       minio-amd-e1001:
         condition: service_healthy
         required: true
+    runtime: nvidia
     healthcheck:
       test:
         - CMD-SHELL
@@ -583,14 +585,14 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - /home/ictrek/workspace-docker/model/deepdoc:/root/fastllm/res/deepdoc
-      - /home/ictrek/workspace-docker/model/bge-m3:/root/fastllm/res/model/bge-m3
-      - /home/ictrek/workspace-docker/model/tts:/root/fastllm/res/model/tts
-      - /home/ictrek/workspace-docker/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
-      - /home/ictrek/workspace-docker/nltk_data:/root/nltk_data
-      - /home/ictrek/workspace-docker/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
-      - /home/ictrek/workspace-docker/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
-      - /home/ictrek/workspace-docker/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /home/ictrek/workspace-docker/chatbot/resource/model/deepdoc:/root/fastllm/res/deepdoc
+      - /home/ictrek/workspace-docker/chatbot/resource/model/bge-m3:/root/fastllm/res/model/bge-m3
+      - /home/ictrek/workspace-docker/chatbot/resource/model/tts:/root/fastllm/res/model/tts
+      - /home/ictrek/workspace-docker/chatbot/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
+      - /home/ictrek/workspace-docker/chatbot/resource/nltk_data:/root/nltk_data
+      - /home/ictrek/workspace-docker/chatbot/resource/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
+      - /home/ictrek/workspace-docker/chatbot/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
+      - /home/ictrek/workspace-docker/chatbot/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
       - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/picture
     environment:
       MARIADB_HOST: 172.28.1.1
@@ -646,17 +648,17 @@ services:
     container_name: fastllm-ollama
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_official_cu124_0.7.0
     restart: always
-    command: ["bash", "/root/ollama_run.sh"]
     stdin_open: true
     tty: true
+    runtime: nvidia
     environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,garbage_collection_threshold:0.6,max_split_size_mb:512
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - VLLM_USE_CPU_CACHE=True
       - MAX_MODEL_LEN=32768
-      - OLLAMA_MAX_LOADED_MODELS=2
-      - OLLAMA_NUM_PARALLEL=2
+      - NVIDIA_VISIBLE_DEVICES=0
     volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/ollama
-        target: /root/.ollama
+      - /home/ictrek/workspace-docker/chatbot/ollama:/root/.ollama
     profiles:
       - amd-e1001
     ports:
