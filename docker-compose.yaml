@@ -15,7 +15,7 @@ services:
       target: arm-dev
       context: ../
       dockerfile: docker/dockerfile
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_dev_1.2.61
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_dev_1.2.62
     healthcheck:
       test:
         - CMD-SHELL
@@ -54,11 +54,13 @@ services:
       - /data/jzy/resource/model/tts:/root/fastllm/res/model/tts
       - /data/jzy/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /data/jzy/resource/nltk_data:/root/nltk_data
-      - /data/jzy/resource/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
       - /data/jzy/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /data/jzy/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /data/jzy/resource/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
       - /data/jzy/resource/picture:/root/picture
+      - /data/jzy/resource/video:/root/video
       - /data/jzy/shell:/root/shell
+      - /data/jzy/output:/root/output
     environment:
       MARIADB_HOST: 172.28.1.3
       MARIADB_PORT: 3306
@@ -78,7 +80,7 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 22299
+      OLLAMA_PORT: 11434
       CHAT_MODEL: ictrek/qwen3:1.7b16k
       CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
@@ -189,28 +191,6 @@ services:
     restart: always
     volumes:
       - /data/jzy/volume/redis/data:/data
-  ollama-arm-dev:
-    container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_official_0.7.0
-    restart: always
-    command: ["bash", "/root/ollama_run.sh"]
-    stdin_open: true
-    tty: true
-    environment:
-      - MAX_MODEL_LEN=32768
-      - OLLAMA_MAX_LOADED_MODELS=2
-      - OLLAMA_NUM_PARALLEL=2
-    volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/ollama
-        target: /root/.ollama
-    profiles:
-      - full
-    ports:
-      - 22299:11434
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.9
 
 # arm-e1001
   fastllm-arm-e1001:
@@ -221,7 +201,7 @@ services:
         /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
         /root/.local/bin/uv run main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_e1001_1.2.61
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_e1001_1.2.62
     build:
       target: arm-e1001
       context: ../
@@ -254,9 +234,9 @@ services:
       - /home/ictrek/workspace-docker/model/tts:/root/fastllm/res/model/tts
       - /home/ictrek/workspace-docker/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /home/ictrek/workspace-docker/nltk_data:/root/nltk_data
-      - /home/ictrek/workspace-docker/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
       - /home/ictrek/workspace-docker/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /home/ictrek/workspace-docker/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /home/ictrek/workspace-docker/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
       - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/picture
     environment:
       MARIADB_HOST: 172.28.1.1
@@ -277,7 +257,7 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 22299
+      OLLAMA_PORT: 11434
       CHAT_MODEL: ictrek/qwen3:1.7b16k
       CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
@@ -308,26 +288,6 @@ services:
     volumes:
       - /home/ictrek/workspace-docker/minio/data:/data
       - /home/ictrek/workspace-docker/minio/config:/root/.config
-  ollama-arm-e1001:
-    container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_official_0.7.0
-    restart: always
-    command: ["bash", "/root/ollama_run.sh"]
-    stdin_open: true
-    tty: true
-    environment:
-      - MAX_MODEL_LEN=32768
-      - OLLAMA_MAX_LOADED_MODELS=2
-      - OLLAMA_NUM_PARALLEL=2
-    volumes:
-      - /home/ictrek/workspace-docker/ollama:/root/.ollama
-    profiles:
-      - arm-e1001
-    ports:
-      - 22299:11434
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.9
 
 # amd-dev
   fastllm-amd-dev:
@@ -344,7 +304,7 @@ services:
       target: amd-dev
       context: ../
       dockerfile: docker/dockerfile
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_dev_1.2.45
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_dev_1.2.62
     depends_on:
       elasticsearch-amd-dev:
         condition: service_healthy
@@ -384,11 +344,13 @@ services:
       - /data/jzy/resource/model/tts:/root/fastllm/res/model/tts
       - /data/jzy/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /data/jzy/resource/nltk_data:/root/nltk_data
-      - /data/jzy/resource/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
       - /data/jzy/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /data/jzy/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /data/jzy/resource/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
       - /data/jzy/resource/picture:/root/picture
+      - /data/jzy/resource/video:/root/video
       - /data/jzy/shell:/root/shell
+      - /data/jzy/output:/root/output
     environment:
       MARIADB_HOST: 172.28.1.3
       MARIADB_PORT: 3306
@@ -408,7 +370,7 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 22299
+      OLLAMA_PORT: 11434
       CHAT_MODEL: ictrek/qwen3:4b16k
       CHAT_COT_MODEL: ictrek/qwen3:4b16k
       SUMMARY_MODEL: ictrek/qwen3:4b16k
@@ -522,30 +484,6 @@ services:
     restart: always
     volumes:
       - /data/jzy/volume/redis/data:/data
-  ollama-amd-dev:
-    container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_official_cu124_0.7.0
-    restart: always
-    command: ["bash", "/root/ollama_run.sh"]
-    stdin_open: true
-    tty: true
-    runtime: nvidia
-    # gpus: all
-    environment:
-      - MAX_MODEL_LEN=32768
-      - OLLAMA_MAX_LOADED_MODELS=2
-      - OLLAMA_NUM_PARALLEL=2
-    volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/ollama
-        target: /root/.ollama
-    profiles:
-      - full
-    ports:
-      - 22299:11434
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.9
 
 # amd-e1001
   fastllm-amd-e1001:
@@ -556,7 +494,7 @@ services:
         /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
         /root/.local/bin/uv run main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_e1001_1.2.45
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_e1001_1.2.62
     build:
       target: amd-e1001
       context: ../
@@ -590,9 +528,9 @@ services:
       - /home/ictrek/workspace-docker/chatbot/resource/model/tts:/root/fastllm/res/model/tts
       - /home/ictrek/workspace-docker/chatbot/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /home/ictrek/workspace-docker/chatbot/resource/nltk_data:/root/nltk_data
-      - /home/ictrek/workspace-docker/chatbot/resource/model/faster-whisper-large-v3-int8:/root/fastllm/res/model/faster-whisper-large-v3-int8
       - /home/ictrek/workspace-docker/chatbot/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /home/ictrek/workspace-docker/chatbot/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /home/ictrek/workspace-docker/chatbot/resource/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
       - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/picture
     environment:
       MARIADB_HOST: 172.28.1.1
@@ -613,7 +551,7 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 22299
+      OLLAMA_PORT: 11434
       CHAT_MODEL: ictrek/qwen3:1.7b16k
       CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
@@ -644,28 +582,6 @@ services:
     volumes:
       - /home/ictrek/workspace-docker/minio/data:/data
       - /home/ictrek/workspace-docker/minio/config:/root/.config
-  ollama-amd-e1001:
-    container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_official_cu124_0.7.0
-    restart: always
-    stdin_open: true
-    tty: true
-    runtime: nvidia
-    environment:
-      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,garbage_collection_threshold:0.6,max_split_size_mb:512
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-      - VLLM_USE_CPU_CACHE=True
-      - MAX_MODEL_LEN=32768
-      - NVIDIA_VISIBLE_DEVICES=0
-    volumes:
-      - /home/ictrek/workspace-docker/chatbot/ollama:/root/.ollama
-    profiles:
-      - amd-e1001
-    ports:
-      - 22299:11434
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.9
 networks:
   fastllm:
     name: fastllm
