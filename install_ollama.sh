@@ -2,6 +2,8 @@
 
 # 可选代理参数
 PROXY=""
+# 是否离线安装
+OFFLINE=0
 
 # 解析参数
 for arg in "$@"; do
@@ -10,13 +12,18 @@ for arg in "$@"; do
       PROXY="${arg#*=}"
       shift
       ;;
+    --offline)
+      OFFLINE=1
+      shift
+      ;;
     *)
       echo "未知参数: $arg"
-      echo "用法: $0 [--proxy=http://proxy.example.com:7890]"
+      echo "用法: $0 [--proxy=http://proxy.example.com:7890] [--offline]"
       exit 1
       ;;
   esac
 done
+
 
 # 如果设置了代理，导出环境变量
 if [[ -n "$PROXY" ]]; then
@@ -24,11 +31,17 @@ if [[ -n "$PROXY" ]]; then
   export https_proxy="$PROXY"
   echo "使用代理: $PROXY"
 else
-  echo "未设置代理，直接安装"
+  echo "未设置代理"
 fi
 
 # 安装 Ollama
-curl ${PROXY:+-x "$PROXY"} -fsSL https://ollama.com/install.sh | sh
+if [[ "$OFFLINE" == "1" ]]; then
+  echo "正在使用本地安装包安装 Ollama..."
+  export OLLAMA_OFFLINE=1
+  bash ollama.sh
+else
+  curl ${PROXY:+-x "$PROXY"} -fsSL https://ollama.com/install.sh | bash
+fi
 
 # 替换默认目录
 
