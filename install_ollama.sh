@@ -31,7 +31,7 @@ fi
 curl ${PROXY:+-x "$PROXY"} -fsSL https://ollama.com/install.sh | sh
 
 # 替换默认目录
-rm -rf /home/ictrek/.ollama
+
 ln -s /home/ictrek/workspace-docker/chatbot/ollama /home/ictrek/.ollama
 
 # 修改 systemd 服务文件
