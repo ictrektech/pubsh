@@ -32,7 +32,28 @@ curl ${PROXY:+-x "$PROXY"} -fsSL https://ollama.com/install.sh | sh
 
 # 替换默认目录
 
-ln -s /home/ictrek/workspace-docker/chatbot/ollama /home/ictrek/.ollama
+# 处理 ~/.ollama 链接或目录
+TARGET_LINK="/home/ictrek/.ollama"
+REAL_DIR="/home/ictrek/workspace-docker/chatbot/ollama"
+
+if [[ -L "$TARGET_LINK" ]]; then
+  echo "$TARGET_LINK 是符号链接，正在删除链接..."
+  rm "$TARGET_LINK"
+elif [[ -d "$TARGET_LINK" ]]; then
+  # 判断是否是链接并指向正确的目标
+  if [[ "$(realpath "$TARGET_LINK")" != "$REAL_DIR" ]]; then
+    echo "$TARGET_LINK 是目录，但不是指向目标目录，正在删除..."
+    rm -rf "$TARGET_LINK"
+  else
+    echo "$TARGET_LINK 是指向目标的链接，无需修改。"
+  fi
+fi
+
+# 建立新链接（如果尚未建立）
+if [[ ! -L "$TARGET_LINK" ]]; then
+  echo "创建符号链接: $TARGET_LINK -> $REAL_DIR"
+  ln -s "$REAL_DIR" "$TARGET_LINK"
+fi
 
 # 修改 systemd 服务文件
 SERVICE_FILE="/etc/systemd/system/ollama.service"
