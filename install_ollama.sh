@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 默认值为空
+# 可选代理参数
 PROXY=""
 
-# 解析具名参数
+# 解析参数
 for arg in "$@"; do
   case $arg in
     --proxy=*)
@@ -12,25 +12,23 @@ for arg in "$@"; do
       ;;
     *)
       echo "未知参数: $arg"
-      echo "用法: $0 --proxy=http://proxy.example.com:7890"
+      echo "用法: $0 [--proxy=http://proxy.example.com:7890]"
       exit 1
       ;;
   esac
 done
 
-# 检查参数是否设置
-if [[ -z "$PROXY" ]]; then
-  echo "请提供 --proxy 参数"
-  echo "示例: $0 --proxy=http://proxy.example.com:7890"
-  exit 1
+# 如果设置了代理，导出环境变量
+if [[ -n "$PROXY" ]]; then
+  export http_proxy="$PROXY"
+  export https_proxy="$PROXY"
+  echo "使用代理: $PROXY"
+else
+  echo "未设置代理，直接安装"
 fi
 
-# 设置代理
-export http_proxy="$PROXY"
-export https_proxy="$PROXY"
-
 # 安装 Ollama
-curl -x "$http_proxy" -fsSL https://ollama.com/install.sh | sh
+curl ${PROXY:+-x "$PROXY"} -fsSL https://ollama.com/install.sh | sh
 
 # 替换默认目录
 rm -rf /home/ictrek/.ollama
