@@ -49,6 +49,8 @@ fi
 TARGET_LINK="/home/ictrek/.ollama"
 REAL_DIR="/home/ictrek/workspace-docker/chatbot/ollama"
 
+sudo chown -R ictrek:ictrek $REAL_DIR
+
 if [[ -L "$TARGET_LINK" ]]; then
   echo "$TARGET_LINK 是符号链接，正在删除链接..."
   rm "$TARGET_LINK"
