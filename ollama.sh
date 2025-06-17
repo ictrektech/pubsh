@@ -84,7 +84,7 @@ $SUDO install -o0 -g0 -m755 -d "$OLLAMA_INSTALL_DIR/lib/ollama"
 #     $SUDO tar -xzf - -C "$OLLAMA_INSTALL_DIR"
 
 if [ "$OLLAMA_OFFLINE" = "1" ]; then
-    status "使用本地安装包安装 Ollama：/home/ictrek/ollama.tgz"
+    status "使用本地安装包安装 Ollama：/home/ictrek/workspace-docker/chatbot/ollama.tgz"
     $SUDO tar -xzf /home/ictrek/workspace-docker/chatbot/ollama.tgz -C "$OLLAMA_INSTALL_DIR"
 else
     status "Downloading Linux ${ARCH} bundle"
