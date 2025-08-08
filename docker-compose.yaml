@@ -298,7 +298,9 @@ services:
     restart: always
     stdin_open: true
     tty: true
-    runtime: nvidia
+    environment:
+      - MAX_MODEL_LEN=32768
+      - OLLAMA_NUM_PARALLEL=2
     volumes:
       - /home/ictrek/workspace-docker/chatbot/ollama:/root/.ollama
     profiles:
@@ -624,6 +626,129 @@ services:
       - /home/ictrek/workspace-docker/chatbot/ollama:/root/.ollama
     profiles:
       - amd-e1001
+    ports:
+      - 22298:11435
+      - 22299:11434
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+
+# arm-nx
+  fastllm-arm-nx:
+    command: 
+      - sh
+      - -c
+      - |
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+        /root/.local/bin/uv run main.py
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_nx_1.2.65
+    build:
+      target: arm-nx
+      context: ../
+      dockerfile: docker/dockerfile
+    depends_on:
+      minio-arm-nx:
+        condition: service_healthy
+        required: true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+    profiles:
+      - arm-nx
+    runtime: nvidia
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - /home/ictrek/workspace-docker/model/deepdoc:/root/fastllm/res/deepdoc
+      - /home/ictrek/workspace-docker/model/bge-m3:/root/fastllm/res/model/bge-m3
+      - /home/ictrek/workspace-docker/model/vits-melo-tts-zh_en:/root/fastllm/res/model/vits-melo-tts-zh_en
+      - /home/ictrek/workspace-docker/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
+      - /home/ictrek/workspace-docker/nltk_data:/root/nltk_data
+      - /home/ictrek/workspace-docker/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
+      - /home/ictrek/workspace-docker/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
+      - /home/ictrek/workspace-docker/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
+      - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/user
+    environment:
+      MARIADB_HOST: 172.28.1.1
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      ELASTICSEARCH_HOST: 172.28.1.1
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.1
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22299
+      NICE_OLLAMA_PORT: 22298
+      CHAT_MODEL: ictrek/qwen3:1.7b16k
+      CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+  minio-arm-nx:
+    command:
+      - server
+      - /data
+    container_name: fastllm-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    profiles:
+      - arm-nx
+    restart: always
+    volumes:
+      - /home/ictrek/workspace-docker/minio/data:/data
+      - /home/ictrek/workspace-docker/minio/config:/root/.config
+  ollama-arm-nx:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_l4t_0.11.3
+    restart: always
+    stdin_open: true
+    tty: true
+    runtime: nvidia
+    volumes:
+      - /home/ictrek/workspace-docker/chatbot/ollama:/root/.ollama
+    profiles:
+      - arm-nx
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,garbage_collection_threshold:0.6,max_split_size_mb:512
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - VLLM_USE_CPU_CACHE=True
+      - MAX_MODEL_LEN=32768
+      - NVIDIA_VISIBLE_DEVICES=0
     ports:
       - 22298:11435
       - 22299:11434
