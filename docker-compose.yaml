@@ -6,16 +6,17 @@ services:
       - sh
       - -c
       - |
-        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
         service ssh start
+        service vsftpd start
         tail -f /dev/null
-        # /root/.local/bin/uv run main.py
     container_name: fastllm-server
     build:
       target: arm-dev
       context: ../
       dockerfile: docker/dockerfile
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_dev_1.2.62
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_dev_1.2.65
     healthcheck:
       test:
         - CMD-SHELL
@@ -43,6 +44,7 @@ services:
     ports:
       - 25000:5000
       - 2222:22
+      - 20021:21
     profiles:
       - arm-dev
     restart: always
@@ -51,14 +53,13 @@ services:
     volumes:
       - /data/jzy/resource/deepdoc:/root/fastllm/res/deepdoc
       - /data/jzy/resource/model/bge-m3:/root/fastllm/res/model/bge-m3
-      - /data/jzy/resource/model/tts:/root/fastllm/res/model/tts
+      - /data/jzy/resource/model/vits-melo-tts-zh_en:/root/fastllm/res/model/vits-melo-tts-zh_en
       - /data/jzy/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /data/jzy/resource/nltk_data:/root/nltk_data
       - /data/jzy/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /data/jzy/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
       - /data/jzy/resource/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
-      - /data/jzy/resource/picture:/root/picture
-      - /data/jzy/resource/video:/root/video
+      - /data/jzy/resource/user:/root/user
       - /data/jzy/shell:/root/shell
       - /data/jzy/output:/root/output
     environment:
@@ -80,7 +81,8 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 11434
+      OLLAMA_PORT: 22299
+      NICE_OLLAMA_PORT: 22298
       CHAT_MODEL: ictrek/qwen3:1.7b16k
       CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
@@ -198,10 +200,11 @@ services:
       - sh
       - -c
       - |
-        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
         /root/.local/bin/uv run main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_e1001_1.2.62
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_e1001_1.2.65
     build:
       target: arm-e1001
       context: ../
@@ -231,13 +234,13 @@ services:
     volumes:
       - /home/ictrek/workspace-docker/model/deepdoc:/root/fastllm/res/deepdoc
       - /home/ictrek/workspace-docker/model/bge-m3:/root/fastllm/res/model/bge-m3
-      - /home/ictrek/workspace-docker/model/tts:/root/fastllm/res/model/tts
+      - /home/ictrek/workspace-docker/model/vits-melo-tts-zh_en:/root/fastllm/res/model/vits-melo-tts-zh_en
       - /home/ictrek/workspace-docker/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /home/ictrek/workspace-docker/nltk_data:/root/nltk_data
       - /home/ictrek/workspace-docker/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /home/ictrek/workspace-docker/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
       - /home/ictrek/workspace-docker/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
-      - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/picture
+      - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/user
     environment:
       MARIADB_HOST: 172.28.1.1
       MARIADB_PORT: 3306
@@ -257,7 +260,8 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 11434
+      OLLAMA_PORT: 22299
+      NICE_OLLAMA_PORT: 22298
       CHAT_MODEL: ictrek/qwen3:1.7b16k
       CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
@@ -288,6 +292,23 @@ services:
     volumes:
       - /home/ictrek/workspace-docker/minio/data:/data
       - /home/ictrek/workspace-docker/minio/config:/root/.config
+  ollama-arm-e1001:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_0.11.3
+    restart: always
+    stdin_open: true
+    tty: true
+    runtime: nvidia
+    volumes:
+      - /home/ictrek/workspace-docker/chatbot/ollama:/root/.ollama
+    profiles:
+      - arm-e1001
+    ports:
+      - 22298:11435
+      - 22299:11434
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
 
 # amd-dev
   fastllm-amd-dev:
@@ -295,16 +316,17 @@ services:
       - sh
       - -c
       - |
-        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
         service ssh start
+        service vsftpd start
         tail -f /dev/null
-        # /root/.local/bin/uv run main.py
     container_name: fastllm-server
     build:
       target: amd-dev
       context: ../
       dockerfile: docker/dockerfile
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_dev_1.2.62
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_dev_1.2.65
     depends_on:
       elasticsearch-amd-dev:
         condition: service_healthy
@@ -333,6 +355,7 @@ services:
     ports:
       - 25000:5000
       - 2222:22
+      - 20021:21
     profiles:
       - amd-dev
     restart: always
@@ -341,14 +364,13 @@ services:
     volumes:
       - /data/jzy/resource/deepdoc:/root/fastllm/res/deepdoc
       - /data/jzy/resource/model/bge-m3:/root/fastllm/res/model/bge-m3
-      - /data/jzy/resource/model/tts:/root/fastllm/res/model/tts
+      - /data/jzy/resource/model/vits-melo-tts-zh_en:/root/fastllm/res/model/vits-melo-tts-zh_en
       - /data/jzy/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /data/jzy/resource/nltk_data:/root/nltk_data
       - /data/jzy/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /data/jzy/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
       - /data/jzy/resource/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
-      - /data/jzy/resource/picture:/root/picture
-      - /data/jzy/resource/video:/root/video
+      - /data/jzy/resource/user:/root/user
       - /data/jzy/shell:/root/shell
       - /data/jzy/output:/root/output
     environment:
@@ -370,7 +392,8 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 11434
+      OLLAMA_PORT: 22299
+      NICE_OLLAMA_PORT: 22298
       CHAT_MODEL: ictrek/qwen3:4b16k
       CHAT_COT_MODEL: ictrek/qwen3:4b16k
       SUMMARY_MODEL: ictrek/qwen3:4b16k
@@ -487,14 +510,15 @@ services:
 
 # amd-e1001
   fastllm-amd-e1001:
-    command: 
+    command:
       - sh
       - -c
       - |
-        /root/fastllm/.venv/bin/celery -A task worker -l debug -P eventlet --logfile /root/fastllm/log/celery.log &
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
         /root/.local/bin/uv run main.py
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_e1001_1.2.62
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_e1001_1.2.65
     build:
       target: amd-e1001
       context: ../
@@ -525,13 +549,13 @@ services:
     volumes:
       - /home/ictrek/workspace-docker/chatbot/resource/model/deepdoc:/root/fastllm/res/deepdoc
       - /home/ictrek/workspace-docker/chatbot/resource/model/bge-m3:/root/fastllm/res/model/bge-m3
-      - /home/ictrek/workspace-docker/chatbot/resource/model/tts:/root/fastllm/res/model/tts
+      - /home/ictrek/workspace-docker/chatbot/resource/model/vits-melo-tts-zh_en:/root/fastllm/res/model/vits-melo-tts-zh_en
       - /home/ictrek/workspace-docker/chatbot/resource/model/Spark-TTS-0.5B:/root/fastllm/res/model/Spark-TTS-0.5B
       - /home/ictrek/workspace-docker/chatbot/resource/nltk_data:/root/nltk_data
       - /home/ictrek/workspace-docker/chatbot/resource/model/BGE-VL-large:/root/fastllm/res/model/BGE-VL-large
       - /home/ictrek/workspace-docker/chatbot/resource/model/opus-mt-zh-en:/root/fastllm/res/model/opus-mt-zh-en
       - /home/ictrek/workspace-docker/chatbot/resource/model/SenseVoiceSmall:/root/fastllm/res/model/SenseVoiceSmall
-      - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/picture
+      - /home/ictrek/workspace-docker/v1000/data/nas/root:/root/user
     environment:
       MARIADB_HOST: 172.28.1.1
       MARIADB_PORT: 3306
@@ -551,7 +575,8 @@ services:
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
       OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 11434
+      OLLAMA_PORT: 22299
+      NICE_OLLAMA_PORT: 22298
       CHAT_MODEL: ictrek/qwen3:1.7b16k
       CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
@@ -580,8 +605,31 @@ services:
       - amd-e1001
     restart: always
     volumes:
-      - /home/ictrek/workspace-docker/minio/data:/data
-      - /home/ictrek/workspace-docker/minio/config:/root/.config
+      - /home/ictrek/workspace-docker/chatbot/minio/data:/data
+      - /home/ictrek/workspace-docker/chatbot/minio/config:/root/.config
+  ollama-amd-e1001:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_0.11.3
+    restart: always
+    stdin_open: true
+    tty: true
+    runtime: nvidia
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,garbage_collection_threshold:0.6,max_split_size_mb:512
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - VLLM_USE_CPU_CACHE=True
+      - MAX_MODEL_LEN=32768
+      - NVIDIA_VISIBLE_DEVICES=0
+    volumes:
+      - /home/ictrek/workspace-docker/chatbot/ollama:/root/.ollama
+    profiles:
+      - amd-e1001
+    ports:
+      - 22298:11435
+      - 22299:11434
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
 networks:
   fastllm:
     name: fastllm
