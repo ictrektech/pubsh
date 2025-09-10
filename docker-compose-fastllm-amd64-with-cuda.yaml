@@ -2,7 +2,7 @@ name: chatbot
 services:
   fastllm:
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.73
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.74
     restart: unless-stopped
     command:
       - sh
@@ -12,16 +12,22 @@ services:
         mkdir -p /root/fastllm/log /var/run/celery
         rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
         /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
 
         nice -n 19 /root/fastllm/.venv/bin/celery multi start \
           low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
           -f /root/fastllm/log/low_priority_celery.log -Q low_priority
 
-        nice -n 0  /root/fastllm/.venv/bin/celery multi start \
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
           high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
           -f /root/fastllm/log/high_priority_celery.log -Q high_priority
 
-        /root/fastllm/.venv/bin/gunicorn -w 2 -k gevent -b 0.0.0.0:5000 app:app --timeout 120 --graceful-timeout 30
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
     environment:
       LANG: C.UTF-8
       FLASK_ENV: production
@@ -31,10 +37,9 @@ services:
       MARIADB_USER: root
       MARIADB_PASSWORD: Mm123456
       # Peewee 连接池调参（与 conn/mysql_conn.py 一致）
-      DB_POOL_MAX: "16"     # 每个进程连接池上限
-      DB_POOL_WAIT: "15"    # 等待连接超时（秒）
-      DB_POOL_STALE: "120"  # 回收陈旧连接（秒）
-
+      DB_POOL_MAX: "16"
+      DB_POOL_WAIT: "15"
+      DB_POOL_STALE: "120"
       # Elasticsearch / MinIO / Redis / Ollama
       ELASTICSEARCH_HOST: 172.28.1.1
       ELASTICSEARCH_PORT: 9200
