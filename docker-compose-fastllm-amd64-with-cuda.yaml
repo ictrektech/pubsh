@@ -13,7 +13,6 @@ services:
         rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
         /root/fastllm/.venv/bin/celery --version || true
 
-        # 启动 Celery（使用 eventlet，但限制并发以控制 DB 连接总量）
         nice -n 19 /root/fastllm/.venv/bin/celery multi start \
           low_priority_worker -A task -l info -P eventlet --concurrency=8 \
           -f /root/fastllm/log/low_priority_celery.log -Q low_priority
@@ -22,7 +21,6 @@ services:
           high_priority_worker -A task -l info -P eventlet --concurrency=8 \
           -f /root/fastllm/log/high_priority_celery.log -Q high_priority
 
-        # 生产：用 gunicorn + gevent 跑 Flask
         /root/fastllm/.venv/bin/gunicorn -w 2 -k gevent -b 0.0.0.0:5000 app:app --timeout 120 --graceful-timeout 30
     environment:
       LANG: C.UTF-8
