@@ -9,23 +9,35 @@ services:
       - -c
       - |
         set -e
-        mkdir -p /root/fastllm/log
-        rm -rvf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
         /root/fastllm/.venv/bin/celery --version || true
+
+        # 启动 Celery（使用 eventlet，但限制并发以控制 DB 连接总量）
         nice -n 19 /root/fastllm/.venv/bin/celery multi start \
-          low_priority_worker -A task -l debug -P eventlet \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
           -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
         nice -n 0  /root/fastllm/.venv/bin/celery multi start \
-          high_priority_worker -A task -l debug -P eventlet \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
           -f /root/fastllm/log/high_priority_celery.log -Q high_priority
-        /opt/py312/bin/uv --version || true
-        UV_PYTHON=/opt/py312/bin/python /opt/py312/bin/uv run main.py
+
+        # 生产：用 gunicorn + gevent 跑 Flask
+        /root/fastllm/.venv/bin/gunicorn -w 2 -k gevent -b 0.0.0.0:5000 app:app --timeout 120 --graceful-timeout 30
     environment:
       LANG: C.UTF-8
+      FLASK_ENV: production
+      # MySQL
       MARIADB_HOST: 172.28.1.1
       MARIADB_PORT: 3306
       MARIADB_USER: root
       MARIADB_PASSWORD: Mm123456
+      # Peewee 连接池调参（与 conn/mysql_conn.py 一致）
+      DB_POOL_MAX: "16"     # 每个进程连接池上限
+      DB_POOL_WAIT: "15"    # 等待连接超时（秒）
+      DB_POOL_STALE: "120"  # 回收陈旧连接（秒）
+
+      # Elasticsearch / MinIO / Redis / Ollama
       ELASTICSEARCH_HOST: 172.28.1.1
       ELASTICSEARCH_PORT: 9200
       ELASTICSEARCH_USER: elastic
@@ -62,13 +74,12 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
   minio:
     container_name: fastllm-minio
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
     restart: unless-stopped
-    command:
-      - server
-      - /data
+    command: [ "server", "/data" ]
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -79,6 +90,7 @@ services:
         ipv4_address: 172.28.1.5
     ports:
       - 29000:9000
+
   ollama:
     container_name: fastllm-ollama
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_0.11.10
@@ -104,6 +116,7 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
 networks:
   fastllm:
     name: fastllm
