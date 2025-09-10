@@ -1,113 +1,109 @@
 name: chatbot
 services:
   fastllm:
-    command: # tail -f /dev/null
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.73
+    restart: unless-stopped
+    command:
       - sh
       - -c
       - |
-        celery -A task worker -l info > log/celery.log 2> log/celery.log &
-        python3.11 -u main.py > log/flask.log 2> log/flask.log
-    container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.44
-    networks:
-      fastllm:
-        ipv4_address: 172.28.1.2
-    ports:
-      - mode: ingress
-        target: 5000
-        published: "25000"
-        protocol: tcp
-    restart: always
-    stdin_open: true
-    tty: true
-    volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/model/deepdoc
-        target: /root/fastllm/res/deepdoc
-      - type: bind
-        source: /home/ictrek/workspace-docker/model/bge-m3
-        target: /root/fastllm/res/model/bge-m3
-      - type: bind
-        source: /home/ictrek/workspace-docker/model/marqo-fashionSigLIP
-        target: /root/fastllm/res/model/marqo-fashionSigLIP
-      - type: bind
-        source: /home/ictrek/workspace-docker/model/tts
-        target: /root/fastllm/res/model/tts
-      - type: bind
-        source: /home/ictrek/workspace-docker/nltk_data
-        target: /root/nltk_data
-      - type: bind
-        source: /home/ictrek/workspace-docker/model/faster-whisper-large-v3-int8
-        target: /root/fastllm/res/model/faster-whisper-large-v3-int8
-      - type: bind
-        source: /home/ictrek/workspace-docker/model/BGE-VL-large
-        target: /root/fastllm/res/model/BGE-VL-large
-      - type: bind
-        source: /home/ictrek/workspace-docker/v1000/data/nas/root
-        target: /root/picture
+        set -e
+        mkdir -p /root/fastllm/log
+        rm -rvf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l debug -P eventlet \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+        nice -n 0  /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l debug -P eventlet \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+        /opt/py312/bin/uv --version || true
+        UV_PYTHON=/opt/py312/bin/python /opt/py312/bin/uv run main.py
     environment:
+      LANG: C.UTF-8
       MARIADB_HOST: 172.28.1.1
       MARIADB_PORT: 3306
       MARIADB_USER: root
       MARIADB_PASSWORD: Mm123456
-      MINIO_HOST: 172.28.1.5
-      MINIO_PORT: 9000
-      MINIO_USER: minioadmin
-      MINIO_PASSWORD: minioadmin
-      OLLAMA_HOST: 172.28.1.9
-      OLLAMA_PORT: 11434
-      # OLLAMA_HOST: 172.28.1.1
-      # OLLAMA_PORT: 22299
       ELASTICSEARCH_HOST: 172.28.1.1
       ELASTICSEARCH_PORT: 9200
       ELASTICSEARCH_USER: elastic
       ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
       REDIS_HOST: 172.28.1.1
       REDIS_PORT: 6379
       REDIS_USER: default
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
-      CHAT_MODEL: ictrek/qwen2.5:7b
-      CHAT_COT_MODEL: ictrek/ds:r1_7b32k
-      SUMMARY_MODEL: ictrek/qwen2.5:7b
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22298
+      NICE_OLLAMA_PORT: 22299
+      CHAT_MODEL: ictrek/qwen3:1.7b16k
+      CHAT_COT_MODEL: ictrek/qwen3:1.7b16k
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+    volumes:
+      - ${workspace_dir}/chatbot/resource/deepdoc:/root/fastllm/res/deepdoc
+      - ${workspace_dir}/chatbot/resource/model:/root/fastllm/res/model
+      - ${workspace_dir}/chatbot/resource/nltk_data:/root/nltk_data
+      - ${workspace_dir}/v1000/data/nas/root:/root/user
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
   minio:
+    container_name: fastllm-minio
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
+    restart: unless-stopped
     command:
       - server
       - /data
-    container_name: fastllm-minio
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
+    volumes:
+      - ${workspace_dir}/chatbot/minio:/data
     networks:
       fastllm:
         ipv4_address: 172.28.1.5
     ports:
-      - mode: ingress
-        target: 9000
-        published: "29000"
-        protocol: tcp
-    restart: always
-    volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/minio/data
-        target: /data
-      - type: bind
-        source: /home/ictrek/workspace-docker/minio/config
-        target: /root/.config
+      - 29000:9000
   ollama:
     container_name: fastllm-ollama
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_latest
-    restart: always
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_0.11.10
+    restart: unless-stopped
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,garbage_collection_threshold:0.6,max_split_size_mb:512
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - VLLM_USE_CPU_CACHE=True
+      - MAX_MODEL_LEN=32768
+      - NVIDIA_VISIBLE_DEVICES=0
     volumes:
-      - type: bind
-        source: /home/ictrek/workspace-docker/ollama
-        target: /root/.ollama
-    ports:
-      - "22299:11434"
+      - ${workspace_dir}/chatbot/ollama:/root/.ollama
     networks:
       fastllm:
         ipv4_address: 172.28.1.9
+    ports:
+      - 22298:11434
+      - 22299:11435
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 networks:
   fastllm:
     name: fastllm
