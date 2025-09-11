@@ -6,11 +6,26 @@ services:
       - sh
       - -c
       - |
-        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
-        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
-        service ssh start
-        service vsftpd start
-        tail -f /dev/null
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
     container_name: fastllm-server
     build:
       target: arm-dev
@@ -200,9 +215,26 @@ services:
       - sh
       - -c
       - |
-        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
-        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
-        /root/.local/bin/uv run main.py
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
     container_name: fastllm-server
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_e1001_1.2.65
     build:
@@ -318,11 +350,26 @@ services:
       - sh
       - -c
       - |
-        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
-        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
-        service ssh start
-        service vsftpd start
-        tail -f /dev/null
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
     container_name: fastllm-server
     build:
       target: amd-dev
@@ -516,9 +563,26 @@ services:
       - sh
       - -c
       - |
-        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
-        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
-        /root/.local/bin/uv run main.py
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
     container_name: fastllm-server
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_e1001_1.2.65
     build:
@@ -639,9 +703,26 @@ services:
       - sh
       - -c
       - |
-        nice -n 19 /root/fastllm/.venv/bin/celery multi start low_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/low_priority_celery.log -Q low_priority
-        nice -n 0 /root/fastllm/.venv/bin/celery multi start high_priority_worker -A task -l debug -P eventlet -f /root/fastllm/log/high_priority_celery.log -Q high_priority
-        /root/.local/bin/uv run main.py
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
     container_name: fastllm-server
     image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_nx_1.2.65
     build:
