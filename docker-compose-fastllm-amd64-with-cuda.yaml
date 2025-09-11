@@ -2,7 +2,7 @@ name: chatbot
 services:
   fastllm:
     container_name: fastllm-server
-    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.74
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.76
     restart: unless-stopped
     command:
       - sh
