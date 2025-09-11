@@ -169,6 +169,13 @@ services:
       - ${workspace_dir}/chatbot/resource/model:/root/fastllm/res/model
       - ${workspace_dir}/chatbot/resource/nltk_data:/root/nltk_data
       - ${workspace_dir}/v1000/data/nas/root:/root/user
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     environment:
       LANG: C.UTF-8
       FLASK_ENV: production
@@ -201,6 +208,7 @@ services:
       CHAT_MODEL: qwen3:1.7b
       CHAT_COT_MODEL: qwen3:1.7b
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+
 
   minio-amd-e1001:
     command: [ "server", "/data" ]
@@ -292,6 +300,13 @@ services:
       - ${workspace_dir}/chatbot/resource/model:/root/fastllm/res/model
       - ${workspace_dir}/chatbot/resource/nltk_data:/root/nltk_data
       - ${workspace_dir}/v1000/data/nas/root:/root/user
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     environment:
       LANG: C.UTF-8
       FLASK_ENV: production
