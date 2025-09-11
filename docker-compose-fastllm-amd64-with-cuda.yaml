@@ -57,8 +57,8 @@ services:
       OLLAMA_HOST: 172.28.1.1
       OLLAMA_PORT: 22298
       NICE_OLLAMA_PORT: 22299
-      CHAT_MODEL: ictrek/qwen3:1.7b
-      CHAT_COT_MODEL: ictrek/qwen3:4b
+      CHAT_MODEL: qwen3:1.7b
+      CHAT_COT_MODEL: qwen3:1.7b
       SUMMARY_MODEL: ictrek/qwen3:1.7b16k
     volumes:
       - ${workspace_dir}/chatbot/resource/deepdoc:/root/fastllm/res/deepdoc
