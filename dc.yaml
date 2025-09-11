@@ -1,0 +1,375 @@
+name: fastllm
+services:
+  # arm-e1001
+  fastllm-arm-e1001:
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_1.2.76
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${workspace_dir}/chatbot/resource/deepdoc:/root/fastllm/res/deepdoc
+      - ${workspace_dir}/chatbot/resource/model:/root/fastllm/res/model
+      - ${workspace_dir}/chatbot/resource/nltk_data:/root/nltk_data
+      - ${workspace_dir}/v1000/data/nas/root:/root/user
+    environment:
+      LANG: C.UTF-8
+      FLASK_ENV: production
+      # MySQL
+      MARIADB_HOST: 172.28.1.1
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      # Peewee 连接池
+      DB_POOL_MAX: "16"
+      DB_POOL_WAIT: "15"
+      DB_POOL_STALE: "120"
+      # Elasticsearch / MinIO / Redis / Ollama
+      ELASTICSEARCH_HOST: 172.28.1.1
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.1
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22298
+      NICE_OLLAMA_PORT: 22299
+      CHAT_MODEL: qwen3:1.7b
+      CHAT_COT_MODEL: qwen3:1.7b
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+
+  minio-arm-e1001:
+    command: [ "server", "/data" ]
+    container_name: fastllm-minio
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    restart: unless-stopped
+    volumes:
+      - ${workspace_dir}/chatbot/minio:/data
+
+  ollama-arm-e1001:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_0.11.10
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - MAX_MODEL_LEN=32768
+      - OLLAMA_NUM_PARALLEL=2
+    volumes:
+      - ${workspace_dir}/chatbot/ollama:/root/.ollama
+    ports:
+      - 22298:11434
+      - 22299:11435
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+
+  # amd-e1001
+  fastllm-amd-e1001:
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:amd_1.2.76
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${workspace_dir}/chatbot/resource/deepdoc:/root/fastllm/res/deepdoc
+      - ${workspace_dir}/chatbot/resource/model:/root/fastllm/res/model
+      - ${workspace_dir}/chatbot/resource/nltk_data:/root/nltk_data
+      - ${workspace_dir}/v1000/data/nas/root:/root/user
+    environment:
+      LANG: C.UTF-8
+      FLASK_ENV: production
+      # MySQL
+      MARIADB_HOST: 172.28.1.1
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      # Peewee 连接池
+      DB_POOL_MAX: "16"
+      DB_POOL_WAIT: "15"
+      DB_POOL_STALE: "120"
+      # Elasticsearch / MinIO / Redis / Ollama
+      ELASTICSEARCH_HOST: 172.28.1.1
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.1
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22298
+      NICE_OLLAMA_PORT: 22299
+      CHAT_MODEL: qwen3:1.7b
+      CHAT_COT_MODEL: qwen3:1.7b
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+
+  minio-amd-e1001:
+    command: [ "server", "/data" ]
+    container_name: fastllm-minio
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    restart: unless-stopped
+    volumes:
+      - ${workspace_dir}/chatbot/minio:/data
+
+  ollama-amd-e1001:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:amd_0.11.10
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,garbage_collection_threshold:0.6,max_split_size_mb:512
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - VLLM_USE_CPU_CACHE=True
+      - MAX_MODEL_LEN=32768
+      - NVIDIA_VISIBLE_DEVICES=0
+    volumes:
+      - ${workspace_dir}/chatbot/ollama:/root/.ollama
+    ports:
+      - 22298:11434
+      - 22299:11435
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+
+  # arm-nx
+  fastllm-arm-nx:
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        mkdir -p /root/fastllm/log /var/run/celery
+        rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
+        /root/fastllm/.venv/bin/celery --version || true
+        /root/fastllm/.venv/bin/gunicorn --version || true
+
+        nice -n 19 /root/fastllm/.venv/bin/celery multi start \
+          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/low_priority_worker.pid \
+          -f /root/fastllm/log/low_priority_celery.log -Q low_priority
+
+        nice -n 0 /root/fastllm/.venv/bin/celery multi start \
+          high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --pidfile=/var/run/celery/high_priority_worker.pid \
+          -f /root/fastllm/log/high_priority_celery.log -Q high_priority
+
+        exec /root/fastllm/.venv/bin/gunicorn \
+          -w 2 -k gevent -b 0.0.0.0:5000 \
+          --timeout 120 --graceful-timeout 30 \
+          app:app
+    container_name: fastllm-server
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/fastllm:arm_l4t_1.2.76
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:5000/health_check
+      timeout: 10s
+      interval: 10s
+      retries: 3
+      start_period: 100s
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.2
+    ports:
+      - 25000:5000
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${workspace_dir}/chatbot/resource/deepdoc:/root/fastllm/res/deepdoc
+      - ${workspace_dir}/chatbot/resource/model:/root/fastllm/res/model
+      - ${workspace_dir}/chatbot/resource/nltk_data:/root/nltk_data
+      - ${workspace_dir}/v1000/data/nas/root:/root/user
+    environment:
+      LANG: C.UTF-8
+      FLASK_ENV: production
+      # MySQL
+      MARIADB_HOST: 172.28.1.1
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASSWORD: Mm123456
+      # Peewee 连接池
+      DB_POOL_MAX: "16"
+      DB_POOL_WAIT: "15"
+      DB_POOL_STALE: "120"
+      # Elasticsearch / MinIO / Redis / Ollama
+      ELASTICSEARCH_HOST: 172.28.1.1
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_USER: elastic
+      ELASTICSEARCH_PASSWORD: Ee123456
+      MINIO_HOST: 172.28.1.5
+      MINIO_PORT: 9000
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+      REDIS_HOST: 172.28.1.1
+      REDIS_PORT: 6379
+      REDIS_USER: default
+      REDIS_PASSWORD: Rr123456
+      REDIS_DB: 0
+      OLLAMA_HOST: 172.28.1.1
+      OLLAMA_PORT: 22298
+      NICE_OLLAMA_PORT: 22299
+      CHAT_MODEL: qwen3:1.7b
+      CHAT_COT_MODEL: qwen3:1.7b
+      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+
+  minio-arm-nx:
+    command: [ "server", "/data" ]
+    container_name: fastllm-minio
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek-arm/minio:RELEASE.2021-04-22T15-44-28Z
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -i http://localhost:9000/minio/health/live
+      timeout: 10s
+      interval: 10s
+      retries: 50
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.5
+    ports:
+      - 29000:9000
+    restart: unless-stopped
+    volumes:
+      - ${workspace_dir}/chatbot/minio:/data
+
+  ollama-arm-nx:
+    container_name: fastllm-ollama
+    image: swr.cn-southwest-2.myhuaweicloud.com/ictrek/ollama_server:arm_l4t_0.11.10
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,garbage_collection_threshold:0.6,max_split_size_mb:512
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - VLLM_USE_CPU_CACHE=True
+      - MAX_MODEL_LEN=32768
+      - NVIDIA_VISIBLE_DEVICES=0
+    volumes:
+      - ${workspace_dir}/chatbot/ollama:/root/.ollama
+    ports:
+      - 22298:11434
+      - 22299:11435
+    networks:
+      fastllm:
+        ipv4_address: 172.28.1.9
+
+networks:
+  fastllm:
+    name: fastllm
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
