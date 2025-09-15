@@ -13,17 +13,19 @@ services:
         rm -vf /var/run/celery/low_priority_worker.pid /var/run/celery/high_priority_worker.pid || true
         /root/fastllm/.venv/bin/celery --version || true
         /root/fastllm/.venv/bin/gunicorn --version || true
-
+    
         nice -n 19 /root/fastllm/.venv/bin/celery multi start \
-          low_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          low_priority_worker -A task -l info -P prefork --concurrency=4 \
+          --max-tasks-per-child=100 --time-limit=900 --soft-time-limit=840 \
           --pidfile=/var/run/celery/low_priority_worker.pid \
           -f /root/fastllm/log/low_priority_celery.log -Q low_priority
-
+    
         nice -n 0 /root/fastllm/.venv/bin/celery multi start \
           high_priority_worker -A task -l info -P eventlet --concurrency=8 \
+          --max-tasks-per-child=500 \
           --pidfile=/var/run/celery/high_priority_worker.pid \
           -f /root/fastllm/log/high_priority_celery.log -Q high_priority
-
+    
         exec /root/fastllm/.venv/bin/gunicorn \
           -w 2 -k gevent -b 0.0.0.0:5000 \
           --timeout 120 --graceful-timeout 30 \
@@ -54,12 +56,13 @@ services:
       REDIS_USER: default
       REDIS_PASSWORD: Rr123456
       REDIS_DB: 0
-      OLLAMA_HOST: 172.28.1.1
-      OLLAMA_PORT: 22298
-      NICE_OLLAMA_PORT: 22299
-      CHAT_MODEL: qwen3:1.7b
+      OLLAMA_HOST: 172.28.1.9
+      OLLAMA_PORT: 11434
+      NICE_OLLAMA_PORT: 11435
+      CHAT_MODEL: qwen2.5:3b
       CHAT_COT_MODEL: qwen3:1.7b
-      SUMMARY_MODEL: ictrek/qwen3:1.7b16k
+      SUMMARY_MODEL: qwen2.5:3b
+      VL_MODEL: minicpm-v
     volumes:
       - ${workspace_dir}/chatbot/resource/deepdoc:/root/fastllm/res/deepdoc
       - ${workspace_dir}/chatbot/resource/model:/root/fastllm/res/model
