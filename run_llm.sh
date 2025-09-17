@@ -45,7 +45,7 @@ CONTAINER_NAME="fastllm-ollama"
 MODELS=(
     "minicpm-v"
     "ictrek/ds:r1_1.5b"
-    "ictrek/ds:r1_7"
+    "ictrek/ds:r1_7b"
     "ictrek/llama3.2:3b"
     "ictrek/qwen3:1.7b16k"
     "ictrek/qwen3:4b16k"
