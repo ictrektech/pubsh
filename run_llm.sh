@@ -52,6 +52,7 @@ MODELS=(
     "qwen3:4b"
     "qwen3:1.7b"
     "qwen2.5vl:3b"
+    "gemma3:4b"
     "blaifa/InternVL3_5:4b"
     "ictrek/qwen2.5:1.5b32k"
     "ictrek/qwen2.5:3b32k"
