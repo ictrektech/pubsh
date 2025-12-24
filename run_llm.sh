@@ -59,6 +59,7 @@ MODELS=(
     "qwen2.5:7b"
     "qwen2.5:3b"
     "qwen2.5:1.5b"
+    "qwen3-vl:2b"
 )
 
 for MODEL in "${MODELS[@]}"
